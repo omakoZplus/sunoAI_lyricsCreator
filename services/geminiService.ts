@@ -9,6 +9,21 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+const generateContentStreamWithRetry = async (prompt: string) => {
+  try {
+    return await ai.models.generateContentStream({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          tools: [{googleSearch: {}}],
+        },
+    });
+  } catch (error) {
+    console.error("Error generating content with Gemini API:", error);
+    throw new Error("Failed to communicate with the AI model.");
+  }
+};
+
 export async function* generateLyricsStream(
   topic: string, 
   userInputTitle: string, 
@@ -22,8 +37,6 @@ export async function* generateLyricsStream(
   styleTags: string[],
   bpm: string
 ): AsyncGenerator<string> {
-  const hasStructure = existingLyrics.includes('[') && existingLyrics.includes(']');
-
   const prompt = `
     You are an expert songwriter and a master of the Suno AI music generator (v5). Your task is to write lyrics that are not only creative but also perfectly formatted with detailed metatags to guide the AI's music generation.
 
@@ -39,14 +52,29 @@ export async function* generateLyricsStream(
         - Place these tags strategically before or within lyrical sections to influence the music at that specific point.
         - **Do not just list tags at the top.** Integrate them naturally with the song's flow.
     4.  **No Explanations:** Do NOT add any extra explanations, artist names, or text outside of the title and the tagged lyrics.
+    5.  **Spacing:** Do NOT add extra blank lines between metatags or between a metatag and a structural tag. A single newline character should separate these elements.
+        - **Correct Example:**
+          [Genre: Pop]
+          [Intro]
+          [Instrument: Synth]
+          A line of lyrics...
+        - **Incorrect Example:**
+          [Genre: Pop]
+
+          [Intro]
+
+          [Instrument: Synth]
+          A line of lyrics...
 
     **TRACK TYPE:**
     ${isInstrumental
       ? `
       - This is an INSTRUMENTAL track.
-      - Focus heavily on describing instrumental sections and solos.
+      - **IMPORTANT GOAL:** The output should be a structure for a concise instrumental piece, typically resulting in a 2-3 minute long song. Avoid overly long, complex, or repetitive song structures that mimic vocal pop songs.
+      - **STRUCTURE GUIDANCE:** Instead of a verse-chorus structure, think in terms of musical movements: [Intro], [Theme A], [Development/Section B], [Solo], [Theme A Reprise], [Outro]. The structure should tell a musical story.
+      - Focus heavily on describing the instrumental performance, dynamics, and emotional arc.
       - Use tags like [Guitar Solo], [Instrumental Break], [Synth Lead Melody], [Orchestral Swell].
-      - OMIT any vocal parts, vocal style tags, or lyrical lines for singing. The output should be a structure of instrumental cues.`
+      - OMIT any vocal parts, vocal style tags, or lyrical lines for singing. The output must be a structure of instrumental cues ONLY.`
       : `
       - This is a VOCAL track.
       - Write lyrics for a vocal performance.
@@ -56,7 +84,7 @@ export async function* generateLyricsStream(
     **METATAG CATEGORIES TO USE:**
     *   **Overall Style (at the start):** \`[Genre: <Specific Genre>]\`, \`[Mood: <Primary Mood>, <Secondary Mood>]\`, \`[Tempo: <BPM or description>]\`
     *   **Instrumentation:** \`[Instrument: <instrument> (<description>)]\`, e.g., \`[Instrument: Electric Guitar (distorted riff)]\`, \`[Instrument: 808 Bass (heavy sub)]\`, \`[Instrument: Strings (Lush, cinematic)]\`.
-    *   **Vocal Style (for vocal tracks only):** \`[Vocal Style: <description>]\`, e.g., \`[Vocal Style: Ethereal female soprano]\`, \`[Vocal Style: Rapping with aggressive delivery]\`, \`[Vocal Effect: Reverb]\`.
+    *   **Vocal Style (for vocal tracks only):** \`[Vocal Style: <description>)]\`, e.g., \`[Vocal Style: Ethereal female soprano]\`, \`[Vocal Style: Rapping with aggressive delivery]\`, \`[Vocal Effect: Reverb]\`.
     *   **Energy Level:** \`[Energy: Low/Medium/High/Intense]\`. Use this to guide the song's dynamics.
     *   **Production/FX:** \`[FX: Reverb Heavy]\`, \`[FX: Drum Machine]\`, \`[FX: Filter Sweep]\`.
 
@@ -69,43 +97,129 @@ export async function* generateLyricsStream(
     - **Inspirational Artists (for structure & style):** ${artists || 'None'}
     - **Detailed Style Tags:** ${styleTags.length > 0 ? styleTags.join(', ') : 'None provided. Generate appropriate tags based on genre and mood.'}
     - Your generated metatags like [Instrument: ...] and [FX: ...] MUST be heavily influenced by these Detailed Style Tags.
-
-    ${hasStructure
-        ? `**STRUCTURE TO FILL:**
-    -   You have been given a song structure. Fill in the lyrics and add descriptive metatags for each section based on the rules above.
-    -   **ARTIST INFLUENCE ON STYLE:** The user has listed "${artists}" as inspiration. Let their style influence the lyrical themes, vocabulary, and the type of descriptive metatags you use within the provided structure.
-    -   The final output must retain these exact structural tags.
-
-    ${existingLyrics}`
-        : `**STRUCTURE TO CREATE:**
+    - **STRUCTURE TO CREATE:**
     -   Create a complete and logical song structure.
     -   ${artists ? `**ARTIST INFLUENCE ON STRUCTURE:** The user has listed "${artists}" as inspiration. Analyze their typical song structures (e.g., complex arrangements like Queen, or simple verse-chorus like Ramones) and let this analysis guide the structure you create.` : 'Create a standard song structure (e.g., Intro, Verse, Chorus, Bridge, Outro).'}
-    -   Write complete lyrics/instrumental cues and embed detailed descriptive metatags throughout.`
-    }
-
+    -   Write complete lyrics/instrumental cues and embed detailed descriptive metatags throughout.
+    
     Begin Output:
   `;
 
-  try {
-    const response = await ai.models.generateContentStream({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          tools: [{googleSearch: {}}],
-        },
-    });
-    
-    for await (const chunk of response) {
-      if (chunk.text) {
-        yield chunk.text;
-      }
+  const response = await generateContentStreamWithRetry(prompt);
+  for await (const chunk of response) {
+    if (chunk.text) {
+      yield chunk.text;
     }
-  } catch (error) {
-    console.error("Error generating content with Gemini API:", error);
-    throw new Error("Failed to communicate with the AI model.");
   }
 };
 
+export async function* regenerateSectionStream(
+  topic: string, 
+  title: string,
+  genre: string, 
+  mood: string, 
+  language: string, 
+  voiceStyle: string, 
+  isInstrumental: boolean,
+  artists: string,
+  styleTags: string[],
+  bpm: string,
+  lyricsContext: string,
+  sectionToRegenerate: string
+): AsyncGenerator<string> {
+    const prompt = `
+    You are an expert songwriter, continuing a song that is in progress.
+    Your task is to write lyrics for a specific section of a song, using the provided context of the song's theme and preceding lyrics.
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **FOCUS ON ONE SECTION:** Your output must ONLY be the lyrical or descriptive content for the requested section: [${sectionToRegenerate}].
+    2.  **NO EXTRA TEXT:** Do NOT include the section tag itself (e.g., \`[${sectionToRegenerate}]\`) in your response. Do not repeat the title, previous lyrics, or add any explanations.
+    3.  **MAINTAIN CONTEXT:** The new lyrics must flow logically and thematically from the "LYRICS SO FAR" provided below.
+    4.  **USE METATAGS:** Embed descriptive metatags (e.g., [Instrument: ...], [Vocal Style: ...], [Energy: ...]) within the lyrics for this section, consistent with the overall song style.
+
+    **OVERALL SONG CONTEXT:**
+    - **Topic:** "${topic}"
+    - **Title:** "${title}"
+    - **Language:** ${language}
+    ${genre !== 'None' ? `- **Genre:** "${genre}"` : ''}
+    ${mood !== 'None' ? `- **Mood:** "${mood}"` : ''}
+    ${bpm ? `- **BPM:** "${bpm}"` : ''}
+    ${isInstrumental ? `- **Track Type:** Instrumental` : `- **Track Type:** Vocal`}
+    ${!isInstrumental && voiceStyle ? `- **Vocal Identity:** "${voiceStyle}"` : ''}
+    - **Inspirational Artists:** ${artists || 'None'}
+    - **Detailed Style Tags:** ${styleTags.length > 0 ? styleTags.join(', ') : 'None'}
+
+    **LYRICS SO FAR (for context):**
+    ${lyricsContext || '(This is the first section of the song.)'}
+
+    **YOUR TASK:**
+    Write the content for the **[${sectionToRegenerate}]** section now.
+
+    Begin Output (content for [${sectionToRegenerate}] only):
+    `;
+    const response = await generateContentStreamWithRetry(prompt);
+    for await (const chunk of response) {
+        if (chunk.text) {
+          yield chunk.text;
+        }
+    }
+}
+
+export async function* continueSongStream(
+  topic: string, 
+  title: string,
+  genre: string, 
+  mood: string, 
+  language: string, 
+  voiceStyle: string, 
+  isInstrumental: boolean,
+  artists: string,
+  styleTags: string[],
+  bpm: string,
+  lyricsContext: string,
+): AsyncGenerator<string> {
+    const prompt = `
+    You are an expert songwriter, tasked with continuing a song that is already in progress.
+    Your goal is to write the next logical section that follows the provided lyrics, maintaining the song's established style, theme, and structure.
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **ANALYZE & CONTINUE:** Analyze the provided "EXISTING SONG" to understand its structure (e.g., Verse 1 -> Chorus -> Verse 2). Determine what section should come next (e.g., a second Chorus, a Bridge, a Guitar Solo, or an Outro).
+    2.  **SINGLE SECTION OUTPUT:** Your entire output must be for this single, new section.
+    3.  **FORMATTING:**
+        - Your response MUST start with the structural tag for the new section (e.g., \`[Bridge]\`, \`[Chorus 2]\`, \`[Outro]\`).
+        - Follow the tag with the lyrics and descriptive metatags for that section. Do not add extra blank lines after the section tag.
+        - Do NOT repeat any of the existing song. Do not add any explanations or text outside the new section.
+    4.  **MAINTAIN STYLE:** The new lyrics and metatags must be consistent with the established genre, mood, and instrumentation.
+
+    **OVERALL SONG CONTEXT:**
+    - **Topic:** "${topic}"
+    - **Title:** "${title}"
+    - **Language:** ${language}
+    ${genre !== 'None' ? `- **Genre:** "${genre}"` : ''}
+    ${mood !== 'None' ? `- **Mood:** "${mood}"` : ''}
+    ${bpm ? `- **BPM:** "${bpm}"` : ''}
+    ${isInstrumental ? `- **Track Type:** Instrumental` : `- **Track Type:** Vocal`}
+    ${!isInstrumental && voiceStyle ? `- **Vocal Identity:** "${voiceStyle}"` : ''}
+    - **Inspirational Artists:** ${artists || 'None'}
+    - **Detailed Style Tags:** ${styleTags.length > 0 ? styleTags.join(', ') : 'None'}
+
+    **EXISTING SONG (for context):**
+    ---
+    ${lyricsContext}
+    ---
+
+    **YOUR TASK:**
+    Write the very next section of the song.
+
+    Begin Output (new section only):
+    `;
+    const response = await generateContentStreamWithRetry(prompt);
+    for await (const chunk of response) {
+        if (chunk.text) {
+          yield chunk.text;
+        }
+    }
+}
 
 export const generateSunoPrompt = async (topic: string, genre: string, mood: string, artists: string, voiceStyle: string, isInstrumental: boolean, bpm: string): Promise<string[]> => {
     const prompt = `
@@ -207,7 +321,7 @@ export const findSynonyms = async (word: string): Promise<string[]> => {
   `;
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemiservices/geminiService.tsni-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",

@@ -1,18 +1,35 @@
-
 import React from 'react';
 
 interface ChipProps {
   text: string;
   onRemove: () => void;
+  color?: 'purple' | 'rose';
 }
 
-export const Chip: React.FC<ChipProps> = ({ text, onRemove }) => {
+export const Chip: React.FC<ChipProps> = ({ text, onRemove, color = 'purple' }) => {
+  const colorClasses = {
+    purple: {
+      bg: 'bg-purple-500/20',
+      text: 'text-purple-200',
+      buttonText: 'text-purple-300',
+      buttonHoverBg: 'hover:bg-purple-500/40'
+    },
+    rose: {
+      bg: 'bg-rose-500/20',
+      text: 'text-rose-200',
+      buttonText: 'text-rose-300',
+      buttonHoverBg: 'hover:bg-rose-500/40'
+    }
+  };
+
+  const selectedColor = colorClasses[color];
+
   return (
-    <div className="flex items-center bg-purple-500/20 text-purple-200 text-sm font-medium px-2.5 py-1 rounded-full">
+    <div className={`flex items-center ${selectedColor.bg} ${selectedColor.text} text-sm font-medium px-2.5 py-1 rounded-full`}>
       <span>{text}</span>
       <button
         onClick={onRemove}
-        className="ml-2 -mr-1 flex-shrink-0 text-purple-300 hover:text-white hover:bg-purple-500/40 rounded-full focus:outline-none"
+        className={`ml-2 -mr-1 flex-shrink-0 ${selectedColor.buttonText} hover:text-white ${selectedColor.buttonHoverBg} rounded-full focus:outline-none`}
         aria-label={`Remove ${text}`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">

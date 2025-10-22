@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { GENRES, MOODS, SONG_STRUCTURES, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES, KEY_VSTS } from '../constants';
+import { GENRES, MOODS, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES, KEY_VSTS } from '../constants';
 import { Select } from './Select';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -30,15 +29,18 @@ interface ControlsProps {
   setBpm: (bpm: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
-  setLyrics: (lyrics: string) => void;
   artists: string;
   setArtists: (artists: string) => void;
   onGenerateSunoPrompt: () => void;
   isPromptLoading: boolean;
   sunoPromptTags: string[];
   setSunoPromptTags: (tags: string[]) => void;
+  sunoExcludeTags: string[];
+  setSunoExcludeTags: (tags: string[]) => void;
   promptError: string | null;
   onClearSession: () => void;
+  showMetatagEditor: boolean;
+  setShowMetatagEditor: (show: boolean) => void;
 }
 
 // Moved TagSection outside of the Controls component to preserve state on re-render.
@@ -81,19 +83,23 @@ export const Controls: React.FC<ControlsProps> = ({
   setBpm,
   onGenerate,
   isLoading,
-  setLyrics,
   artists,
   setArtists,
   onGenerateSunoPrompt,
   isPromptLoading,
   sunoPromptTags,
   setSunoPromptTags,
+  sunoExcludeTags,
+  setSunoExcludeTags,
   promptError,
   onClearSession,
+  showMetatagEditor,
+  setShowMetatagEditor,
 }) => {
-  const [selectedTemplate, setSelectedTemplate] = useState(SONG_STRUCTURES[0].name);
   const [promptCopyText, setPromptCopyText] = useState('Copy');
   const [charCountExceeded, setCharCountExceeded] = useState(false);
+  const [excludeCopyText, setExcludeCopyText] = useState('Copy');
+  const [excludeCharCountExceeded, setExcludeCharCountExceeded] = useState(false);
 
   const allTagSuggestions = useMemo(() => {
     return Array.from(new Set([...KEY_INSTRUMENTS, ...PRODUCTION_TECHNIQUES, ...KEY_VSTS]));
@@ -102,6 +108,9 @@ export const Controls: React.FC<ControlsProps> = ({
   const sunoPromptText = sunoPromptTags.join(', ');
   const charCount = sunoPromptText.length;
   
+  const sunoExcludeText = sunoExcludeTags.join(', ');
+  const excludeCharCount = sunoExcludeText.length;
+
   useEffect(() => {
     if (charCountExceeded) {
       const timer = setTimeout(() => setCharCountExceeded(false), 500);
@@ -109,14 +118,12 @@ export const Controls: React.FC<ControlsProps> = ({
     }
   }, [charCountExceeded]);
 
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const templateName = e.target.value;
-      setSelectedTemplate(templateName);
-      const structure = SONG_STRUCTURES.find(s => s.name === templateName);
-      if (structure) {
-          setLyrics(structure.template);
-      }
-  };
+  useEffect(() => {
+    if (excludeCharCountExceeded) {
+      const timer = setTimeout(() => setExcludeCharCountExceeded(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [excludeCharCountExceeded]);
 
   const handlePromptCopy = () => {
     navigator.clipboard.writeText(sunoPromptText);
@@ -124,8 +131,18 @@ export const Controls: React.FC<ControlsProps> = ({
     setTimeout(() => setPromptCopyText('Copy'), 2000);
   };
   
+  const handleExcludeCopy = () => {
+    navigator.clipboard.writeText(sunoExcludeText);
+    setExcludeCopyText('Copied!');
+    setTimeout(() => setExcludeCopyText('Copy'), 2000);
+  };
+
   const handleRemoveTag = (tagToRemove: string) => {
     setSunoPromptTags(sunoPromptTags.filter(tag => tag !== tagToRemove));
+  };
+  
+  const handleRemoveExcludeTag = (tagToRemove: string) => {
+    setSunoExcludeTags(sunoExcludeTags.filter(tag => tag !== tagToRemove));
   };
 
   const handleAddTag = (tagToAdd: string): boolean => {
@@ -137,6 +154,21 @@ export const Controls: React.FC<ControlsProps> = ({
         return true; // Success
        } else {
         setCharCountExceeded(true);
+        return false; // Failed
+       }
+    }
+    return false; // Failed (empty or duplicate)
+  };
+  
+  const handleAddExcludeTag = (tagToAdd: string): boolean => {
+    const trimmedTag = tagToAdd.trim();
+    if (trimmedTag && !sunoExcludeTags.includes(trimmedTag)) {
+       const prospectivePrompt = [...sunoExcludeTags, trimmedTag].join(', ');
+       if (prospectivePrompt.length <= 1000) {
+        setSunoExcludeTags([...sunoExcludeTags, trimmedTag]);
+        return true; // Success
+       } else {
+        setExcludeCharCountExceeded(true);
         return false; // Failed
        }
     }
@@ -226,7 +258,6 @@ export const Controls: React.FC<ControlsProps> = ({
 
       <Accordion title="Advanced Settings">
         <div className="space-y-6 pt-4">
-          <Select label="Song Structure (Optional)" value={selectedTemplate} onChange={handleTemplateChange} options={SONG_STRUCTURES.map(s => s.name)} />
           <div>
             <label htmlFor="voiceStyle" className="block text-sm font-medium text-gray-300 mb-2">
                 Vocal Identity (Optional)
@@ -247,51 +278,90 @@ export const Controls: React.FC<ControlsProps> = ({
             enabled={isInstrumental}
             onChange={setIsInstrumental}
           />
+          <ToggleSwitch
+            label="Advanced Metatag Editor"
+            enabled={showMetatagEditor}
+            onChange={setShowMetatagEditor}
+          />
         </div>
       </Accordion>
 
       {/* Prompt Generator Section */}
-      <div className="pt-6 border-t border-gray-700 space-y-4">
-          <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-purple-300">Suno Style Prompt</h3>
-              <div className={`flex items-center gap-2 transition-transform duration-300 ${charCountExceeded ? 'scale-110' : ''}`}>
-                 <CharCountCircle count={charCount} limit={1000} />
-                 <span className={`font-mono text-sm ${charCount > 1000 ? 'text-red-400' : 'text-gray-400'}`}>/ 1000</span>
+      <div className="pt-6 border-t border-gray-700 space-y-6">
+          <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-purple-300">Suno Style Prompt</h3>
+                  <div className={`flex items-center gap-2 transition-transform duration-300 ${charCountExceeded ? 'scale-110' : ''}`}>
+                    <CharCountCircle count={charCount} limit={1000} color="purple" />
+                    <span className={`font-mono text-sm ${charCount > 1000 ? 'text-red-400' : 'text-gray-400'}`}>/ 1000</span>
+                  </div>
               </div>
+              
+              <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading || !topic.trim()} variant="secondary" fullWidth>
+                <Icon name="regenerate" />
+                {isPromptLoading ? 'Working...' : 'Generate Style Suggestions'}
+              </Button>
+              
+              <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
+                {isPromptLoading && sunoPromptTags.length === 0 ? (
+                  <p className="text-gray-400">Thinking...</p>
+                ) : promptError ? (
+                  <p className="text-red-400">{promptError}</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {sunoPromptTags.map(tag => (
+                        <Chip key={tag} text={tag} onRemove={() => handleRemoveTag(tag)} color="purple" />
+                      ))}
+                      {sunoPromptTags.length === 0 && <p className="text-gray-500 text-sm p-1">Generate or add style tags...</p>}
+                    </div>
+                    <TagInput 
+                      onAddTag={handleAddTag}
+                      allSuggestions={allTagSuggestions}
+                      existingTags={sunoPromptTags}
+                    />
+                  </>
+                )}
+              </div>
+              {sunoPromptTags.length > 0 && !promptError && (
+                <Button onClick={handlePromptCopy} variant="secondary" fullWidth>
+                    <Icon name="copy" />
+                    {promptCopyText}
+                </Button>
+              )}
           </div>
           
-          <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading || !topic.trim()} variant="secondary" fullWidth>
-            <Icon name="regenerate" />
-            {isPromptLoading ? 'Working...' : 'Generate Style Suggestions'}
-          </Button>
-          
-          <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
-            {isPromptLoading && sunoPromptTags.length === 0 ? (
-              <p className="text-gray-400">Thinking...</p>
-            ) : promptError ? (
-              <p className="text-red-400">{promptError}</p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {sunoPromptTags.map(tag => (
-                    <Chip key={tag} text={tag} onRemove={() => handleRemoveTag(tag)} />
-                  ))}
-                  {sunoPromptTags.length === 0 && <p className="text-gray-500 text-sm p-1">Generate or add style tags...</p>}
-                </div>
-                <TagInput 
-                  onAddTag={handleAddTag}
-                  allSuggestions={allTagSuggestions}
-                  existingTags={sunoPromptTags}
-                />
-              </>
-            )}
+          <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-rose-300">Exclude From Style</h3>
+                  <div className={`flex items-center gap-2 transition-transform duration-300 ${excludeCharCountExceeded ? 'scale-110' : ''}`}>
+                     <CharCountCircle count={excludeCharCount} limit={1000} color="rose"/>
+                     <span className={`font-mono text-sm ${excludeCharCount > 1000 ? 'text-red-400' : 'text-gray-400'}`}>/ 1000</span>
+                  </div>
+              </div>
+              
+              <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
+                <>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {sunoExcludeTags.map(tag => (
+                      <Chip key={tag} text={tag} onRemove={() => handleRemoveExcludeTag(tag)} color="rose" />
+                    ))}
+                    {sunoExcludeTags.length === 0 && <p className="text-gray-500 text-sm p-1">Add tags to exclude from the style...</p>}
+                  </div>
+                  <TagInput 
+                    onAddTag={handleAddExcludeTag}
+                    allSuggestions={[]}
+                    existingTags={sunoExcludeTags}
+                  />
+                </>
+              </div>
+              {sunoExcludeTags.length > 0 && (
+                 <Button onClick={handleExcludeCopy} variant="secondary" fullWidth>
+                    <Icon name="copy" />
+                    {excludeCopyText}
+                </Button>
+              )}
           </div>
-          {sunoPromptTags.length > 0 && !promptError && (
-             <Button onClick={handlePromptCopy} variant="secondary" fullWidth>
-                <Icon name="copy" />
-                {promptCopyText}
-            </Button>
-          )}
       </div>
 
       {/* Lyrics Generator Section */}

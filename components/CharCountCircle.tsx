@@ -5,6 +5,7 @@ interface CharCountCircleProps {
   limit: number;
   size?: number;
   strokeWidth?: number;
+  color?: 'purple' | 'rose';
 }
 
 export const CharCountCircle: React.FC<CharCountCircleProps> = ({
@@ -12,13 +13,19 @@ export const CharCountCircle: React.FC<CharCountCircleProps> = ({
   limit,
   size = 32,
   strokeWidth = 3,
+  color: baseColor = 'purple'
 }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(count / limit, 1);
   const offset = circumference * (1 - progress);
 
-  let color = 'stroke-purple-400';
+  const colorMap = {
+    purple: 'stroke-purple-400',
+    rose: 'stroke-rose-400',
+  }
+
+  let color = colorMap[baseColor];
   if (count > limit) {
     color = 'stroke-red-500';
   } else if (progress > 0.9) {
