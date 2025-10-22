@@ -1,0 +1,5 @@
+{
+  "name": "Suno AI Lyrics Creator",
+  "description": "An interactive web app that helps users instantly generate and edit song lyrics using AI, designed for songwriters, producers, and hobbyists to find lyrical inspiration.",
+  "requestFramePermissions": []
+}
