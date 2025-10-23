@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { SectionAnalysis } from "../types";
 
@@ -9,6 +10,28 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+const handleGeminiError = (error: unknown, context: string): Error => {
+  console.error(`Error in Gemini API call (${context}):`, error);
+  let message = `Failed during "${context}". Please try again.`;
+
+  if (error instanceof Error) {
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes('safety')) {
+      message = 'Request blocked for safety reasons. Please adjust your prompt.';
+    } else if (errorMessage.includes('400')) {
+      message = 'The AI model couldn\'t process the request. Try rephrasing your input.';
+    } else if (errorMessage.includes('api_key') || errorMessage.includes('permission denied')) {
+        message = 'API key is invalid or missing permissions.';
+    } else if (errorMessage.includes('500') || errorMessage.includes('503') || errorMessage.includes('unavailable')) {
+        message = 'The AI service is currently unavailable. Please try again later.';
+    } else if (errorMessage.includes('deadline_exceeded') || errorMessage.includes('timeout')) {
+        message = 'The request timed out. Please try again.';
+    }
+  }
+  
+  return new Error(message);
+};
+
 const generateContentStreamWithRetry = async (prompt: string) => {
   try {
     return await ai.models.generateContentStream({
@@ -19,8 +42,7 @@ const generateContentStreamWithRetry = async (prompt: string) => {
         },
     });
   } catch (error) {
-    console.error("Error generating content with Gemini API:", error);
-    throw new Error("Failed to communicate with the AI model.");
+    throw handleGeminiError(error, "content stream generation");
   }
 };
 
@@ -31,8 +53,7 @@ const generateContentWithRetry = async (prompt: string) => {
           contents: prompt,
       });
     } catch (error) {
-      console.error("Error generating content with Gemini API:", error);
-      throw new Error("Failed to communicate with the AI model.");
+      throw handleGeminiError(error, "content generation");
     }
   };
 
@@ -311,8 +332,7 @@ export const generateSunoPrompt = async (
     return JSON.parse(response.text.trim());
 
   } catch (error) {
-    console.error("Error generating Suno prompt with Gemini API:", error);
-    throw new Error("Failed to communicate with the AI model for prompt generation.");
+    throw handleGeminiError(error, "Suno prompt generation");
   }
 };
 
@@ -361,8 +381,7 @@ export const findRhymes = async (word: string): Promise<string[]> => {
     });
     return JSON.parse(response.text.trim());
   } catch (error) {
-    console.error("Error finding rhymes:", error);
-    throw new Error("Failed to find rhymes.");
+    throw handleGeminiError(error, "finding rhymes");
   }
 };
 
@@ -387,8 +406,7 @@ export const findSynonyms = async (word: string): Promise<string[]> => {
     });
     return JSON.parse(response.text.trim());
   } catch (error) {
-    console.error("Error finding synonyms:", error);
-    throw new Error("Failed to find synonyms.");
+    throw handleGeminiError(error, "finding synonyms");
   }
 };
 
@@ -413,8 +431,7 @@ export const getThematicIdeas = async (word: string): Promise<string[]> => {
       });
       return JSON.parse(response.text.trim());
     } catch (error) {
-      console.error("Error getting thematic ideas:", error);
-      throw new Error("Failed to get thematic ideas.");
+      throw handleGeminiError(error, "getting thematic ideas");
     }
   };
   
@@ -439,8 +456,7 @@ export const getThematicIdeas = async (word: string): Promise<string[]> => {
       });
       return JSON.parse(response.text.trim());
     } catch (error) {
-      console.error("Error generating imagery:", error);
-      throw new Error("Failed to generate imagery.");
+      throw handleGeminiError(error, "generating imagery");
     }
   };
 
@@ -509,8 +525,7 @@ export const analyzeSection = async (sectionText: string): Promise<SectionAnalys
       });
       return JSON.parse(response.text.trim());
     } catch (error) {
-      console.error("Error analyzing section:", error);
-      throw new Error("Failed to analyze section.");
+      throw handleGeminiError(error, "section analysis");
     }
   };
 
@@ -535,7 +550,6 @@ export const generateSpeech = async (text: string): Promise<string> => {
         }
         return base64Audio;
     } catch (error) {
-        console.error("Error generating speech with Gemini API:", error);
-        throw new Error("Failed to generate speech. Please try again.");
+        throw handleGeminiError(error, "speech generation");
     }
 };

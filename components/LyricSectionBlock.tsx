@@ -23,12 +23,11 @@ interface LyricSectionBlockProps {
   isSpeechLoading: boolean;
   isSpeaking: boolean;
   showMetatagEditor: boolean;
-  onDragStart: (index: number) => void;
-  onDragEnter: (index: number) => void;
-  onDragEnd: () => void;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
-export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
+export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
   section,
   index,
   onUpdateContent,
@@ -40,8 +39,7 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
   isSpeaking,
   showMetatagEditor,
   onDragStart,
-  onDragEnter,
-  onDragEnd
+  onDragEnter
 }) => {
   const ariaStatus = section.isLoading
     ? `Regenerating ${section.type}...`
@@ -53,9 +51,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
     <div
       className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 flex gap-3 group relative"
       draggable
-      onDragStart={() => onDragStart(index)}
-      onDragEnter={() => onDragEnter(index)}
-      onDragEnd={onDragEnd}
+      data-index={index}
+      onDragStart={onDragStart}
+      onDragEnter={onDragEnter}
       onDragOver={(e) => e.preventDefault()}
     >
         <div className="text-gray-500 cursor-grab pt-1">
@@ -102,4 +100,4 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
         </div>
     </div>
   );
-};
+});

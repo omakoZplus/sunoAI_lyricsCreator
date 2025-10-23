@@ -51,7 +51,7 @@ interface ControlsProps {
 
 type TagCategory = 'instruments' | 'production' | 'vsts';
 
-export const Controls: React.FC<ControlsProps> = ({
+export const Controls: React.FC<ControlsProps> = React.memo(({
   topic,
   setTopic,
   title,
@@ -510,4 +510,4 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
     </div>
   );
-};
+});

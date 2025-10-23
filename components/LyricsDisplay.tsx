@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useCallback } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
 import { WordSmithPopup } from './WordSmithPopup';
@@ -46,7 +47,7 @@ type ModalState = {
   isLoading: boolean;
 };
 
-export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
+export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   title,
   lyrics,
   setLyrics,
@@ -95,18 +96,13 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     URL.revokeObjectURL(url);
   };
   
-  const handlePlaySection = async (sectionId: string) => {
-    // Stop any currently playing audio
+  const handlePlaySection = useCallback(async (sectionId: string) => {
     if (nowPlaying) {
       nowPlaying.source.stop();
       setNowPlaying(null);
-      // If the clicked section was the one playing, we just stop it.
-      if (nowPlaying.sectionId === sectionId) {
-        return;
-      }
+      if (nowPlaying.sectionId === sectionId) return;
     }
     
-    // Initialize AudioContext on first use
     if (!audioCtxRef.current) {
         try {
             audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -146,13 +142,14 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
 
     } catch (err) {
         console.error("Failed to play audio:", err);
-        alert("Could not generate audio preview. Please try again.");
+        const errorMessage = err instanceof Error ? err.message : "Could not generate audio preview.";
+        alert(errorMessage);
     } finally {
         setIsSpeechLoading(null);
     }
-  };
+  }, [nowPlaying, lyrics]);
 
-  const showPopup = (
+  const showPopup = useCallback((
     event: React.MouseEvent,
     section: SongSection,
     selection: string,
@@ -171,9 +168,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
             selectionEnd
         });
     }
-  };
+  }, []);
 
-  const handleAction = async (action: 'rhymes' | 'synonyms' | 'thematic' | 'imagery') => {
+  const handleAction = useCallback(async (action: 'rhymes' | 'synonyms' | 'thematic' | 'imagery') => {
     const { selection } = popup;
     setPopup(p => ({ ...p, visible: false }));
 
@@ -182,7 +179,6 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
       return;
     }
 
-    let results: string[] = [];
     let title = '';
     let promise: Promise<string[]>;
 
@@ -210,29 +206,47 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     setModal({ visible: true, title, suggestions: [], isLoading: true });
     
     try {
-      results = await promise;
+      const results = await promise;
       const finalTitle = title.replace('...', `for "${action === 'imagery' ? selection : wordToAnalyze}"`);
       setModal({ visible: true, title: finalTitle, suggestions: results, isLoading: false });
-    } catch (e) {
-      console.error(`Error performing action ${action}:`, e);
-      setModal({ visible: true, title: `Error finding ${action}`, suggestions: [`Could not fetch suggestions.`], isLoading: false });
+    } catch (err) {
+      console.error(`Error performing action ${action}:`, err);
+      const errorMessage = err instanceof Error ? err.message : `Could not fetch suggestions.`;
+      setModal({ visible: true, title: `Error finding ${action}`, suggestions: [errorMessage], isLoading: false });
     }
-  };
+  }, [popup]);
   
-  const handleDragEnd = () => {
-    if (dragItem.current !== null && dragOverItem.current !== null) {
+  const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+      const index = e.currentTarget.dataset.index;
+      if (index) {
+          dragItem.current = parseInt(index, 10);
+      }
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+      const index = e.currentTarget.dataset.index;
+      if (index) {
+          dragOverItem.current = parseInt(index, 10);
+      }
+  }, []);
+  
+  const handleDragEnd = useCallback(() => {
+    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
       onReorderSections(dragItem.current, dragOverItem.current);
     }
     dragItem.current = null;
     dragOverItem.current = null;
-  };
+  }, [onReorderSections]);
   
   const hasLyrics = lyrics.length > 0;
 
   return (
     <>
       <div ref={displayRef} className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 shadow-lg h-full flex flex-col" style={{ minHeight: '600px' }}>
-        <div className="flex-grow p-6 flex flex-col relative overflow-hidden">
+        <div 
+            className="flex-grow p-6 flex flex-col relative overflow-hidden"
+            onDragEnd={handleDragEnd}
+        >
           {title && <h2 className="text-2xl font-bold mb-4 text-purple-300 flex-shrink-0">{title}</h2>}
           <div 
             className="flex-grow space-y-4 overflow-y-auto pr-2 -mr-2"
@@ -254,11 +268,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
                 isSpeechLoading={isSpeechLoading === section.id}
                 isSpeaking={nowPlaying?.sectionId === section.id}
                 showMetatagEditor={showMetatagEditor}
-                // Drag and drop props
                 index={index}
-                onDragStart={(idx) => dragItem.current = idx}
-                onDragEnter={(idx) => dragOverItem.current = idx}
-                onDragEnd={handleDragEnd}
+                onDragStart={handleDragStart}
+                onDragEnter={handleDragEnter}
               />
             ))}
           </div>
@@ -302,4 +314,4 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
       <SuggestionsModal {...modal} onClose={() => setModal({ visible: false, title: '', suggestions: [], isLoading: false })} />
     </>
   );
-};
+});

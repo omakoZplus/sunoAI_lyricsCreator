@@ -105,11 +105,9 @@ const App: React.FC = () => {
     if (enabled) {
       setLanguage('No Language');
     } else {
-      if (language === 'No Language') {
-        setLanguage('English');
-      }
+      setLanguage(currentLanguage => currentLanguage === 'No Language' ? 'English' : currentLanguage);
     }
-  }, [language]);
+  }, []);
 
   // Effect to handle the [Instrumental] tag in the artist input
   useEffect(() => {
@@ -124,7 +122,7 @@ const App: React.FC = () => {
     }
   }, [artists, isInstrumental, handleInstrumentalChange]);
 
-  const handleClearSession = () => {
+  const handleClearSession = useCallback(() => {
     if (window.confirm('Are you sure you want to start a new song? This will clear all current input and lyrics.')) {
       localStorage.removeItem(SAVED_STATE_KEY);
       setTopic('');
@@ -143,9 +141,9 @@ const App: React.FC = () => {
       setPromptError(null);
       setPreviousSunoPromptTags(null);
     }
-  };
+  }, []);
 
-  const handleSurpriseMe = async () => {
+  const handleSurpriseMe = useCallback(async () => {
     setIsSurprisingMe(true);
     setError(null);
     try {
@@ -163,12 +161,13 @@ const App: React.FC = () => {
       setTitle(''); // Clear title as it's a new idea
       
     } catch (err) {
-      setError('Could not generate a surprise topic. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Could not generate a surprise topic. Please try again.';
+      setError(errorMessage);
       console.error(err);
     } finally {
       setIsSurprisingMe(false);
     }
-  };
+  }, []);
 
   const handleGenerateLyrics = useCallback(async () => {
     if (!topic.trim()) {
@@ -204,9 +203,7 @@ const App: React.FC = () => {
             
             let newLyrics = [...currentLyrics];
             
-            // Add new sections as they are parsed
             if (parsedSections.length > newLyrics.length) {
-              // Mark previous section as done loading
               if (newLyrics.length > 0) {
                 newLyrics[newLyrics.length - 1].isLoading = false;
               }
@@ -214,7 +211,6 @@ const App: React.FC = () => {
               newLyrics.push(...sectionsToAdd.map(s => ({ ...s, isLoading: true, content: '' })));
             }
 
-            // Update content for all sections (new and old)
             for (let i = 0; i < parsedSections.length; i++) {
               if (newLyrics[i]) {
                 newLyrics[i].content = parsedSections[i].content;
@@ -226,7 +222,6 @@ const App: React.FC = () => {
         }
       }
 
-      // After stream, mark final section as not loading
       setLyrics(currentLyrics => {
         if (currentLyrics.length > 0) {
           const lastSection = currentLyrics[currentLyrics.length - 1];
@@ -240,7 +235,8 @@ const App: React.FC = () => {
       });
 
     } catch (err) {
-      setError('Failed to generate lyrics. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while generating lyrics.';
+      setError(errorMessage);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -255,9 +251,8 @@ const App: React.FC = () => {
     const lyricsContext = stringifyLyrics(contextSections);
     const sectionToRegenerate = lyrics[sectionIndex];
     
-    // Set loading state for the specific section
-    const newLyrics = lyrics.map(s => s.id === sectionId ? { ...s, content: '', isLoading: true } : s);
-    setLyrics(newLyrics);
+    setLyrics(currentLyrics => currentLyrics.map(s => s.id === sectionId ? { ...s, content: '', isLoading: true } : s));
+    setError(null);
 
     try {
         const stream = regenerateSectionStream(topic, title, genre, mood, language, voiceStyle, isInstrumental, artists, sunoPromptTags, bpm, lyricsContext, sectionToRegenerate.type);
@@ -270,10 +265,10 @@ const App: React.FC = () => {
             ));
         }
     } catch (err) {
-        setError(`Failed to regenerate ${sectionToRegenerate.type}.`);
+        const errorMessage = err instanceof Error ? err.message : `Failed to regenerate ${sectionToRegenerate.type}.`;
+        setError(errorMessage);
         console.error(err);
     } finally {
-        // Unset loading state
         setLyrics(currentLyrics => currentLyrics.map(s =>
             s.id === sectionId ? { ...s, isLoading: false } : s
         ));
@@ -295,31 +290,27 @@ const App: React.FC = () => {
             const newSectionParsed = parseLyrics(newSectionRaw);
             
             if (newSectionParsed.length > 0 && !sectionAdded) {
-                // We have the first section, add it to the state with loading true
                 const newSection = { ...newSectionParsed[0], isLoading: true };
                 setLyrics(currentLyrics => [...currentLyrics, newSection]);
                 sectionAdded = true;
             } else if (sectionAdded && newSectionParsed.length > 0) {
-                // Update the content of the last added section
                 setLyrics(currentLyrics => {
                     const updatedLyrics = [...currentLyrics];
-                    const lastSection = updatedLyrics[updatedLyrics.length - 1];
-                    lastSection.content = newSectionParsed[0].content;
+                    updatedLyrics[updatedLyrics.length - 1].content = newSectionParsed[0].content;
                     return updatedLyrics;
                 });
             }
         }
     } catch (err) {
-        setError('Failed to continue song. Please try again.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to continue song.';
+        setError(errorMessage);
         console.error(err);
     } finally {
-        // Unset loading state on the newly added section
         setLyrics(currentLyrics => {
             if (currentLyrics.length === 0) return [];
             const updatedLyrics = [...currentLyrics];
-            const lastSection = updatedLyrics[updatedLyrics.length - 1];
-            if (lastSection) {
-              lastSection.isLoading = false;
+            if (updatedLyrics[updatedLyrics.length - 1]) {
+              updatedLyrics[updatedLyrics.length - 1].isLoading = false;
             }
             return updatedLyrics;
         });
@@ -331,9 +322,8 @@ const App: React.FC = () => {
     setIsPromptLoading(true);
     setPromptError(null);
     try {
-      setPreviousSunoPromptTags(sunoPromptTags); // Save for undo
+      setPreviousSunoPromptTags(sunoPromptTags);
       const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm, sunoPromptTags);
-      
       const combinedTags = Array.from(new Set(generatedTags));
 
       let currentPrompt = '';
@@ -350,49 +340,48 @@ const App: React.FC = () => {
       }
       setSunoPromptTags(finalTags);
     } catch (err) {
-      setPromptError('Failed to generate Suno prompt. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate Suno prompt.';
+      setPromptError(errorMessage);
       console.error(err);
     } finally {
       setIsPromptLoading(false);
     }
   }, [topic, genre, mood, artists, voiceStyle, isInstrumental, sunoPromptTags, bpm]);
 
-  const handleUndoStyleSuggestion = () => {
+  const handleUndoStyleSuggestion = useCallback(() => {
     if (previousSunoPromptTags !== null) {
       setSunoPromptTags(previousSunoPromptTags);
       setPreviousSunoPromptTags(null);
     }
-  };
+  }, [previousSunoPromptTags]);
 
-  const handleClearSunoPromptTags = () => {
+  const handleClearSunoPromptTags = useCallback(() => {
     setSunoPromptTags([]);
-  };
+  }, []);
 
-  const handleUpdateSectionContent = (sectionId: string, content: string) => {
-    setLyrics(lyrics.map(s => s.id === sectionId ? { ...s, content } : s));
-  };
+  const handleUpdateSectionContent = useCallback((sectionId: string, content: string) => {
+    setLyrics(currentLyrics => currentLyrics.map(s => s.id === sectionId ? { ...s, content } : s));
+  }, []);
   
-  const handleDeleteSection = (sectionId: string) => {
-    setLyrics(lyrics.filter(s => s.id !== sectionId));
-  };
+  const handleDeleteSection = useCallback((sectionId: string) => {
+    setLyrics(currentLyrics => currentLyrics.filter(s => s.id !== sectionId));
+  }, []);
   
-  const handleAddSection = (type: string) => {
+  const handleAddSection = useCallback((type: string) => {
     const newSection: SongSection = {
       id: crypto.randomUUID(),
       type: getNextSectionName(type, lyrics),
       content: '',
     };
-    setLyrics([...lyrics, newSection]);
-  };
+    setLyrics(currentLyrics => [...currentLyrics, newSection]);
+  }, [lyrics]);
   
-  const handleApplyTemplate = (template: string) => {
+  const handleApplyTemplate = useCallback((template: string) => {
     if (!template) return;
-
     const apply = () => {
         const newSections = parseLyrics(template);
         setLyrics(newSections);
     };
-    
     if (lyrics.length > 0) {
         if (window.confirm('Applying a template will replace your current lyrics. Are you sure?')) {
             apply();
@@ -400,21 +389,23 @@ const App: React.FC = () => {
     } else {
         apply();
     }
-  };
+  }, [lyrics]);
 
-  const handleReorderSections = (startIndex: number, endIndex: number) => {
-    const result = Array.from(lyrics);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-    setLyrics(result);
-  };
+  const handleReorderSections = useCallback((startIndex: number, endIndex: number) => {
+    setLyrics(currentLyrics => {
+      const result = Array.from(currentLyrics);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  }, []);
 
-  const handleClearLyricsAndTitle = () => {
+  const handleClearLyricsAndTitle = useCallback(() => {
     if (window.confirm('Are you sure you want to clear the title and all lyrics? This cannot be undone.')) {
       setTitle('');
       setLyrics([]);
     }
-  };
+  }, []);
 
   return (
     <div 

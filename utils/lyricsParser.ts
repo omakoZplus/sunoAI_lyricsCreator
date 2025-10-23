@@ -11,18 +11,23 @@ export interface Metatag {
 
 export const extractMetatags = (text: string): Metatag[] => {
     const tags: Metatag[] = [];
-    let match;
-    // We only care about tags that are NOT section headers.
-    // A simple heuristic: section headers are usually on their own line.
     const lines = text.split('\n');
     let currentIndex = 0;
 
     for (const line of lines) {
-        // Reset regex state for each line
-        METATAG_REGEX.lastIndex = 0;
-        const isSectionHeader = SECTION_TAG_REGEX.test(line.trim());
+        METATAG_REGEX.lastIndex = 0; // Reset global regex
         
+        // Check if the entire line is a potential section header
+        const sectionMatch = line.trim().match(SECTION_TAG_REGEX);
+        let isSectionHeader = false;
+        if (sectionMatch && sectionMatch[0] === line.trim()) {
+            // It's a line with only a tag. Is it structural or a metatag?
+            // Structural tags (e.g., [Verse]) DON'T have colons. Metatags (e.g., [Genre: Pop]) DO.
+            isSectionHeader = !sectionMatch[2].includes(':');
+        }
+
         if (!isSectionHeader) {
+            let match;
             while ((match = METATAG_REGEX.exec(line)) !== null) {
                 tags.push({
                     content: match[1],

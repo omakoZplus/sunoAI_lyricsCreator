@@ -14,6 +14,7 @@ export const GENRES: string[] = [
     'Disco',
     'Drum and Bass',
     'Dubstep',
+    'EDM',
     'Electronic',
     'Emo',
     'Folk',
@@ -129,30 +130,31 @@ export const SONG_STRUCTURES = [
 
 export const KEY_INSTRUMENTS: Record<string, string[]> = {
     'Keyboards & Synths': [
-        '8-bit Synth', 'Accordion', 'Choir Synthesizer', 'Chiptune Synth', 'Electric Piano',
-        'FM Synth Bass', 'Hammond B3 Organ', 'Keyboard', 'Modular Synth', 'Organ',
-        'Overdriven Organ', 'Piano', 'Rhodes Piano', 'Sawtooth Synth Lead', 'Square Wave Synth',
-        'Synth Pad', 'Synthesizer', 'Theremin', 'Vocoder', 'Wavetable Synth', 'Wurlitzer'
+        '8-bit Synth', 'Accordion', 'Acid Bassline', 'Choir Synthesizer', 'Chiptune Synth', 'Electric Piano',
+        'FM Synth Bass', 'Hammond B3 Organ', 'Harpsichord', 'Keyboard', 'Modular Synth', 'Organ',
+        'Overdriven Organ', 'Piano', 'Pluck Synth', 'Reese Bass', 'Rhodes Piano', 'Sawtooth Synth Lead', 'Square Wave Synth',
+        'Sub Bass', 'Supersaw', 'Synth Pad', 'Synthesizer', 'Theremin', 'Vocoder', 'Wavetable Synth', 'Wobble Bass', 'Wurlitzer'
     ].sort(),
     'Guitars & Bass': [
-        'Acoustic Guitar', 'Bass', 'Bass Guitar', 'Electric Guitar', 'Overdriven Guitar', 'Symphonic Guitar'
+        '12-string Acoustic Guitar', 'Acoustic Guitar', 'Bass', 'Bass Guitar', 'Electric Guitar',
+        'Overdriven Guitar', 'Steel-string Acoustic Guitar', 'Symphonic Guitar'
     ].sort(),
     'Strings': [
-        'Cello', 'Harp', 'Strings', 'Violin'
+        'Cello', 'Contrabasses', 'Harp', 'Strings', 'Violin'
     ].sort(),
     'Brass': [
         'Horns', 'Trombone', 'Trumpet'
     ].sort(),
     'Woodwinds': [
-        'Bagpipes', 'Clarinet', 'Flute', 'Harmonica', 'Oboe', 'Saxophone', 'Shakuhachi'
+        'Bagpipes', 'Basson', 'Clarinet', 'Flute', 'Harmonica', 'Oboe', 'Pan Flute', 'Recorder', 'Saxophone', 'Shakuhachi'
     ].sort(),
     'Percussion': [
-        '8-bit Drums', '808 Drum Machine', '909 Drum Machine', 'Cajon', 'Congas', 'Djembe', 'Drums',
-        'Glockenspiel', 'Handpan', 'Kalimba', 'Marimba', 'Percussion', 'Retro Drum Machine', 'Tabla',
-        'Taiko Drums', 'Xylophone'
+        '8-bit Drums', '808 Drum Machine', '808 Kick', '909 Drum Machine', '909 Snare', 'Cajon', 'Chimes', 'Clap', 'Classic Percussion', 'Congas',
+        'Djembe', 'Drums', 'Glockenspiel', 'Handpan', 'Hi-hats', 'Kalimba', 'Kick Drum', 'Latin Percussion', 'Marimba', 'Percussion',
+        'Retro Drum Machine', 'Tabla', 'Taiko Drums', 'Tubular Bells', 'Xylophone'
     ].sort(),
     'Folk & World': [
-        'Banjo', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar', 'Ukulele'
+        'Banjo', 'Bouzouki', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar', 'Ukulele'
     ].sort(),
     'Electronic & DJ': [
         'Turntables'
@@ -161,10 +163,10 @@ export const KEY_INSTRUMENTS: Record<string, string[]> = {
 
 export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
     'Rhythm & Tempo': [
-        'Driving Rhythm', 'Intense Boss Battle Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Upbeat Tempo'
+        'Driving Rhythm', 'Four-on-the-floor', 'Intense Boss Battle Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Upbeat Tempo'
     ].sort(),
     'Mixing & Effects': [
-        '80s Gated Reverb', 'Atmospheric', 'Bitcrushing', 'Crisp Mix', 'Ethereal Pads', 'Gritty Distortion',
+        '80s Gated Reverb', 'Atmospheric', 'Big Room Reverb', 'Bitcrushing', 'Crisp Mix', 'Ethereal Pads', 'Filter Sweep', 'Gritty Distortion',
         'Heavy Reverb', 'Lo-fi Filtering', 'Sidechain Compression', 'Vintage Tape Saturation'
     ].sort(),
     'Harmony & Melody': [
@@ -172,8 +174,8 @@ export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
         'Slick Bassline', 'Soaring Anime Vocals'
     ].sort(),
     'Arrangement & Dynamics': [
-        'Dynamic Builds', 'Epic Orchestral Mix', 'Intricate Arrangements', 'Minimalist Repetition',
-        'Orchestral Stabs'
+        'Buildup', 'Drop', 'Dynamic Builds', 'Epic Orchestral Mix', 'Intricate Arrangements', 'Minimalist Repetition',
+        'Orchestral Stabs', 'Riser'
     ].sort(),
     'Genre & Vibe': [
         'City Pop Groove', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic', 'Modern Pop Sheen',
@@ -188,8 +190,8 @@ export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
 
 export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
     'Synthesizers': [
-        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive X', 'Moog Subsequent',
-        'NES Synth', 'Nexus 4', 'Omnisphere', 'Serum', 'SID Chip Emulation', 'Spire', 'Supersaw Lead',
+        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive', 'Massive X', 'Moog Subsequent',
+        'NES Synth', 'Nexus 4', 'Omnisphere', 'Serum', 'SID Chip Emulation', 'Spire', 'Supersaw Lead', 'Sylenth1',
         'Vocaloid Synth', 'Yamaha DX7-style FM Pad'
     ].sort(),
     'Bass': [
@@ -202,7 +204,7 @@ export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
       'Earthbound Soundfont', 'Orchestral Hit Stab', 'Retro Game Samples', 'SNES Soundfont'
     ].sort(),
     'Effects & Processing': [
-        'Bitcrushed', 'Glitch Effects', 'Granular Texture', 'Professional Mastering',
+        'Bitcrushed', 'CamelCrusher', 'Glitch Effects', 'Granular Texture', 'OTT Compression', 'Professional Mastering',
         'Risers/Sweeps', 'Trance Gate', 'Warped Vocal Sample'
     ].sort()
 };
