@@ -157,7 +157,13 @@ export const KEY_INSTRUMENTS: Record<string, string[]> = {
         'Banjo', 'Bouzouki', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar', 'Ukulele'
     ].sort(),
     'Electronic & DJ': [
-        'Turntables'
+        'Turntables',
+        'DJ Mixer',
+        'Drum Machine',
+        'FX Samples',
+        'Groovebox',
+        'Sampler',
+        'Vocal Samples',
     ].sort()
 };
 
