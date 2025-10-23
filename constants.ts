@@ -101,10 +101,41 @@ export const KEY_INSTRUMENTS: Record<string, string[]> = {
     ].sort()
 };
 
-export const PRODUCTION_TECHNIQUES = [
-    '80s Gated Reverb', 'Arpeggiated', 'Atmospheric', 'Catchy Melodies', 'City Pop Groove', 'Crisp Mix', 'Dissonant Chords', 'Driving Rhythm', 'Dynamic Builds', 'Epic Orchestral Mix', 'Ethereal Pads', 'Gritty Distortion', 'Heavy Reverb', 'Intricate Arrangements', 'Intricate Drum Fills', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic', 'Lush Harmonies', 'Melodic Bassline', 'Minimalist Repetition', 'Modern Pop Sheen', 'Orchestral Stabs', 'Polyrhythmic', 'Punchy Drums', 'Shibuya-kei Influence', 'Sidechain Compression', 'Slick Bassline', 'Slow Tempo', 'Soaring Anime Vocals', 'Technical Guitar Riff', 'Twangy Guitar', 'Upbeat Tempo', 'Vintage Tape Saturation', 'Warm Analog Synths'
-].sort();
+export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
+    'Rhythm & Tempo': [
+        'Driving Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Upbeat Tempo'
+    ].sort(),
+    'Mixing & Effects': [
+        '80s Gated Reverb', 'Atmospheric', 'Crisp Mix', 'Ethereal Pads', 'Gritty Distortion',
+        'Heavy Reverb', 'Sidechain Compression', 'Vintage Tape Saturation'
+    ].sort(),
+    'Harmony & Melody': [
+        'Arpeggiated', 'Catchy Melodies', 'Dissonant Chords', 'Lush Harmonies', 'Melodic Bassline',
+        'Slick Bassline', 'Soaring Anime Vocals'
+    ].sort(),
+    'Arrangement & Dynamics': [
+        'Dynamic Builds', 'Epic Orchestral Mix', 'Intricate Arrangements', 'Minimalist Repetition',
+        'Orchestral Stabs'
+    ].sort(),
+    'Genre & Vibe': [
+        'City Pop Groove', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic', 'Modern Pop Sheen',
+        'Shibuya-kei Influence', 'Technical Guitar Riff', 'Twangy Guitar', 'Warm Analog Synths'
+    ].sort()
+};
 
-export const KEY_VSTS = [
-    '808 Sub Bass', 'Arp Sequence', 'Arturia Piano', 'Bitcrushed', 'Diva', 'EastWest Hollywood Strings', 'FM Synthesis Pad', 'Glitch Effects', 'Granular Texture', 'Kontakt Noire Piano', 'Massive X', 'Moog Subsequent', 'Nexus 4', 'Omnisphere', 'Professional Mastering', 'Risers/Sweeps', 'Serum', 'Spire', 'Spitfire Albion One', 'Supersaw Lead', 'Trance Gate', 'Vocaloid Synth', 'Warped Vocal Sample', 'Wobbly Bass'
-].sort();
+export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
+    'Synthesizers': [
+        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Massive X', 'Moog Subsequent',
+        'Nexus 4', 'Omnisphere', 'Serum', 'Spire', 'Supersaw Lead', 'Vocaloid Synth'
+    ].sort(),
+    'Bass': [
+        '808 Sub Bass', 'Wobbly Bass'
+    ].sort(),
+    'Sample Libraries': [
+        'Arturia Piano', 'EastWest Hollywood Strings', 'Kontakt Noire Piano', 'Spitfire Albion One'
+    ].sort(),
+    'Effects & Processing': [
+        'Bitcrushed', 'Glitch Effects', 'Granular Texture', 'Professional Mastering',
+        'Risers/Sweeps', 'Trance Gate', 'Warped Vocal Sample'
+    ].sort()
+};

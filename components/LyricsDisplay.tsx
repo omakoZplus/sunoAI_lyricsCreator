@@ -21,6 +21,7 @@ interface LyricsDisplayProps {
   onRegenerateSection: (sectionId: string) => void;
   onDeleteSection: (sectionId: string) => void;
   onAddSection: (type: string) => void;
+  onApplyTemplate: (template: string) => void;
   onReorderSections: (startIndex: number, endIndex: number) => void;
   onContinueSong: () => void;
   isContinuing: boolean;
@@ -54,6 +55,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   onRegenerateSection,
   onDeleteSection,
   onAddSection,
+  onApplyTemplate,
   onReorderSections,
   onContinueSong,
   isContinuing,
@@ -207,7 +209,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
         </div>
 
         <div className="p-4 bg-gray-900/50 border-t border-gray-700 rounded-b-2xl flex items-center justify-between space-x-3 flex-shrink-0">
-          <StructureControls onAddSection={onAddSection} />
+          <StructureControls onAddSection={onAddSection} onApplyTemplate={onApplyTemplate} />
           {hasLyrics && !isLoading && (
             <div className="flex items-center space-x-3">
               <Button onClick={onContinueSong} variant="secondary" disabled={isContinuing}>

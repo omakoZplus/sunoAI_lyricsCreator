@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { GENRES, MOODS, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES, KEY_VSTS } from '../constants';
+import { GENRES, MOODS, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES_CATEGORIZED, KEY_VSTS_CATEGORIZED } from '../constants';
 import { Select } from './Select';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -43,27 +43,6 @@ interface ControlsProps {
   setShowMetatagEditor: (show: boolean) => void;
 }
 
-// Moved TagSection outside of the Controls component to preserve state on re-render.
-const TagSection: React.FC<{
-  title: string; 
-  tags: string[];
-  sunoPromptTags: string[];
-  onToggleTag: (tag: string) => void;
-}> = ({ title, tags, sunoPromptTags, onToggleTag }) => (
-   <Accordion title={title}>
-      <div className="pt-4 flex flex-wrap gap-2">
-          {tags.map(tag => (
-              <ToggleChip
-                  key={tag}
-                  text={tag}
-                  isActive={sunoPromptTags.includes(tag)}
-                  onClick={() => onToggleTag(tag)}
-              />
-          ))}
-      </div>
-  </Accordion>
-);
-
 export const Controls: React.FC<ControlsProps> = ({
   topic,
   setTopic,
@@ -103,7 +82,9 @@ export const Controls: React.FC<ControlsProps> = ({
 
   const allTagSuggestions = useMemo(() => {
     const allInstruments = Object.values(KEY_INSTRUMENTS).flat();
-    return Array.from(new Set([...allInstruments, ...PRODUCTION_TECHNIQUES, ...KEY_VSTS]));
+    const allProduction = Object.values(PRODUCTION_TECHNIQUES_CATEGORIZED).flat();
+    const allVSTs = Object.values(KEY_VSTS_CATEGORIZED).flat();
+    return Array.from(new Set([...allInstruments, ...allProduction, ...allVSTs]));
   }, []);
 
   const sunoPromptText = sunoPromptTags.join(', ');
@@ -273,8 +254,45 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
 
-      <TagSection title="Production & Style" tags={PRODUCTION_TECHNIQUES} sunoPromptTags={sunoPromptTags} onToggleTag={handleToggleTag} />
-      <TagSection title="Sound Design & VSTs" tags={KEY_VSTS} sunoPromptTags={sunoPromptTags} onToggleTag={handleToggleTag} />
+      <Accordion title="Production & Style">
+        <div className="pt-4 space-y-6">
+          {Object.entries(PRODUCTION_TECHNIQUES_CATEGORIZED).map(([category, techniques]) => (
+            <div key={category}>
+              <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {techniques.map(technique => (
+                  <ToggleChip
+                    key={technique}
+                    text={technique}
+                    isActive={sunoPromptTags.includes(technique)}
+                    onClick={() => handleToggleTag(technique)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Accordion>
+      
+      <Accordion title="Sound Design & VSTs">
+        <div className="pt-4 space-y-6">
+          {Object.entries(KEY_VSTS_CATEGORIZED).map(([category, vsts]) => (
+            <div key={category}>
+              <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {vsts.map(vst => (
+                  <ToggleChip
+                    key={vst}
+                    text={vst}
+                    isActive={sunoPromptTags.includes(vst)}
+                    onClick={() => handleToggleTag(vst)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Accordion>
 
       <Accordion title="Advanced Settings">
         <div className="space-y-6 pt-4">

@@ -214,7 +214,7 @@ const App: React.FC = () => {
     setIsPromptLoading(true);
     setPromptError(null);
     try {
-      const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm);
+      const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm, sunoPromptTags);
       
       const baseTags: string[] = [];
       if (genre && genre !== 'None') {
@@ -278,6 +278,23 @@ const App: React.FC = () => {
     setLyrics([...lyrics, newSection]);
   };
   
+  const handleApplyTemplate = (template: string) => {
+    if (!template) return;
+
+    const apply = () => {
+        const newSections = parseLyrics(template);
+        setLyrics(newSections);
+    };
+    
+    if (lyrics.length > 0) {
+        if (window.confirm('Applying a template will replace your current lyrics. Are you sure?')) {
+            apply();
+        }
+    } else {
+        apply();
+    }
+  };
+
   const handleReorderSections = (startIndex: number, endIndex: number) => {
     const result = Array.from(lyrics);
     const [removed] = result.splice(startIndex, 1);
@@ -335,6 +352,7 @@ const App: React.FC = () => {
               onRegenerateSection={handleRegenerateSection}
               onDeleteSection={handleDeleteSection}
               onAddSection={handleAddSection}
+              onApplyTemplate={handleApplyTemplate}
               onReorderSections={handleReorderSections}
               onContinueSong={handleContinueSong}
               isContinuing={isContinuing}

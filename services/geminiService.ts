@@ -227,7 +227,16 @@ export async function* continueSongStream(
     }
 }
 
-export const generateSunoPrompt = async (topic: string, genre: string, mood: string, artists: string, voiceStyle: string, isInstrumental: boolean, bpm: string): Promise<string[]> => {
+export const generateSunoPrompt = async (
+    topic: string, 
+    genre: string, 
+    mood: string, 
+    artists: string, 
+    voiceStyle: string, 
+    isInstrumental: boolean, 
+    bpm: string,
+    existingTags: string[]
+): Promise<string[]> => {
     const prompt = `
     You are a prompt engineering expert specializing in the Suno AI music generator (v5). Your task is to create a list of highly-detailed, effective "Style of Music" descriptors based on user-provided details. The goal is to generate a rich set of tags that will guide the AI to create a specific sound.
 
@@ -235,11 +244,14 @@ export const generateSunoPrompt = async (topic: string, genre: string, mood: str
     1.  **ABSOLUTELY NO ARTIST NAMES:** You must never mention any artist names in the final output. Analyze the style of the inspirational artists and translate it into descriptive terms (e.g., instead of "like Queen", describe it as "epic 70s stadium rock", "multi-tracked vocal harmonies", "flamboyant piano", "soaring guitar solos").
     2.  **DETAILED & SPECIFIC:** Each tag in the list should be a descriptive phrase. Go beyond simple genre tags.
     3.  **COVER MULTIPLE FACETS:** Your tags should touch on several of the following aspects:
-        *   **Genre/Subgenre:** Be specific (e.g., "Dream Pop", "Melodic Death Metal", "UK Garage").
-        *   **Instrumentation:** Name specific instruments and their sound (e.g., "punchy 808 bass", "distorted, fuzzy guitar riff", "warm Rhodes piano", "lush string orchestra").
-        *   **Tempo & Rhythm:** (e.g., "120 BPM driving house beat", "slow, melancholic tempo", "complex syncopated rhythms"). If a specific BPM is provided, use it.
-        *   **Production & Atmosphere:** Describe the overall feel and a production quality (e.g., "polished modern production", "lo-fi vintage aesthetic with tape hiss", "cavernous reverb", "epic cinematic soundscape", "intimate and acoustic").
+        *   Genre/Subgenre: Be specific (e.g., "Dream Pop", "Melodic Death Metal", "UK Garage").
+        *   Instrumentation: Name specific instruments and their sound (e.g., "punchy 808 bass", "distorted, fuzzy guitar riff", "warm Rhodes piano", "lush string orchestra").
+        *   Tempo & Rhythm: (e.g., "120 BPM driving house beat", "slow, melancholic tempo", "complex syncopated rhythms"). If a specific BPM is provided, use it.
+        *   Production & Atmosphere: Describe the overall feel and a production quality (e.g., "polished modern production", "lo-fi vintage aesthetic with tape hiss", "cavernous reverb", "epic cinematic soundscape", "intimate and acoustic").
     4.  **FORMAT:** The output must be a JSON array of strings.
+    5.  **BE ADDITIVE & COMPLEMENTARY:** The user has already selected some tags. Your primary goal is to generate **new, complementary** tags that enhance the existing style.
+        *   **DO NOT** repeat or rephrase tags that are already in the "User's Existing Tags" list.
+        *   Your suggestions should add new dimensions to the sound (e.g., if the user has "rock", you could suggest "gritty bassline", "distorted guitar", "powerful drum fills").
     
     ${isInstrumental
       ? `
@@ -261,11 +273,14 @@ export const generateSunoPrompt = async (topic: string, genre: string, mood: str
     -   **Artists for Inspiration (translate their style, do not name them):** ${artists || 'None'}
     -   **Voice Style:** ${isInstrumental ? 'N/A' : (voiceStyle || 'Not specified by user, you can infer one.')}
 
-    Based on this, generate the JSON array of "Style of Music" tags.
+    **User's Existing Tags (DO NOT REPEAT):**
+    - ${existingTags.length > 0 ? existingTags.join(', ') : 'None'}
+
+    Based on all this, generate the JSON array of **new, complementary** "Style of Music" tags.
 
     **High-Quality Example:**
-    *   **User Input:** Genre: "Rock", Mood: "Energetic", Artists: "AC/DC, Guns N' Roses", Voice Style: "Male"
-    *   **Your Output (as JSON):** ["high-energy 80s hard rock", "anthemic stadium rock", "driving 4/4 drum beat", "powerful distorted electric guitar riff", "gritty high-pitched male rock vocals", "blistering guitar solo", "gang backing vocals", "raw and powerful production"]
+    *   **User Input:** Genre: "Rock", Mood: "Energetic", Artists: "AC/DC, Guns N' Roses", Voice Style: "Male", Existing Tags: ["high-energy 80s hard rock", "anthemic stadium rock"]
+    *   **Your Output (as JSON):** ["driving 4/4 drum beat", "powerful distorted electric guitar riff", "gritty high-pitched male rock vocals", "blistering guitar solo", "gang backing vocals", "raw and powerful production"]
   `;
 
   try {
