@@ -7,9 +7,10 @@ interface AccordionProps {
   children: React.ReactNode;
   defaultOpen?: boolean;
   infoText?: string;
+  headerControls?: React.ReactNode;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false, infoText }) => {
+export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false, infoText, headerControls }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -23,7 +24,10 @@ export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOp
           <span>{title}</span>
           {infoText && <InfoToggle text={infoText} />}
         </div>
-        <Icon name="chevron" className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2">
+            {headerControls}
+            <Icon name="chevron" className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
       </button>
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${

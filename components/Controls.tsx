@@ -48,6 +48,8 @@ interface ControlsProps {
   onClearSunoPromptTags: () => void;
 }
 
+type TagCategory = 'instruments' | 'production' | 'vsts';
+
 export const Controls: React.FC<ControlsProps> = ({
   topic,
   setTopic,
@@ -175,6 +177,53 @@ export const Controls: React.FC<ControlsProps> = ({
     }
   };
 
+  const getTagsForCategory = (category: TagCategory): string[] => {
+    switch (category) {
+        case 'instruments':
+            return Object.values(KEY_INSTRUMENTS).flat();
+        case 'production':
+            return Object.values(PRODUCTION_TECHNIQUES_CATEGORIZED).flat();
+        case 'vsts':
+            return Object.values(KEY_VSTS_CATEGORIZED).flat();
+        default:
+            return [];
+    }
+  };
+
+  const handleSurpriseMeTags = (category: TagCategory) => {
+      const tagsForCategory = getTagsForCategory(category);
+      const tagsToClear = new Set(tagsForCategory);
+      const otherTags = sunoPromptTags.filter(tag => !tagsToClear.has(tag));
+
+      const shuffled = tagsForCategory.sort(() => 0.5 - Math.random());
+      const numberOfTags = Math.floor(Math.random() * 3) + 3; // Pick 3, 4, or 5 tags
+      const newTags = shuffled.slice(0, numberOfTags);
+      
+      const combinedTags = Array.from(new Set([...otherTags, ...newTags]));
+      if (combinedTags.join(', ').length > 1000) {
+          setCharCountExceeded(true);
+          return;
+      }
+      setSunoPromptTags(combinedTags);
+  };
+
+  const handleClearTags = (category: TagCategory) => {
+      const tagsToClear = new Set(getTagsForCategory(category));
+      const newTags = sunoPromptTags.filter(tag => !tagsToClear.has(tag));
+      setSunoPromptTags(newTags);
+  };
+
+  const renderAccordionHeaderControls = (category: TagCategory) => (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button onClick={() => handleSurpriseMeTags(category)} variant="secondary" className="!py-1 !px-2.5 text-xs" title="Surprise Me">
+              <Icon name="regenerate" className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => handleClearTags(category)} variant="secondary" className="!py-1 !px-2.5 text-xs !bg-rose-500/20 hover:!bg-rose-500/40" title="Clear All in Category">
+              <Icon name="delete" className="w-4 h-4" />
+          </Button>
+      </div>
+  );
+
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-6">
       
@@ -253,8 +302,9 @@ export const Controls: React.FC<ControlsProps> = ({
       <Accordion 
         title="Key Instruments"
         infoText="Select specific instruments to feature in your song. The AI will use these tags to build the core sound palette for the style prompt."
+        headerControls={renderAccordionHeaderControls('instruments')}
       >
-        <div className="pt-4 space-y-6">
+        <div className="pt-4 space-y-6 max-h-72 overflow-y-auto pr-2">
           {Object.entries(KEY_INSTRUMENTS).map(([category, instruments]) => (
             <div key={category}>
               <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
@@ -276,8 +326,9 @@ export const Controls: React.FC<ControlsProps> = ({
       <Accordion 
         title="Production & Style"
         infoText="Define the overall sound and arrangement. Use these tags to describe the rhythm, mixing techniques, and general vibe of the track."
+        headerControls={renderAccordionHeaderControls('production')}
       >
-        <div className="pt-4 space-y-6">
+        <div className="pt-4 space-y-6 max-h-72 overflow-y-auto pr-2">
           {Object.entries(PRODUCTION_TECHNIQUES_CATEGORIZED).map(([category, techniques]) => (
             <div key={category}>
               <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
@@ -299,8 +350,9 @@ export const Controls: React.FC<ControlsProps> = ({
       <Accordion 
         title="Sound Design & VSTs"
         infoText="For advanced users. Reference specific VSTs or sound design techniques to guide the AI towards a highly specific electronic or modern sound."
+        headerControls={renderAccordionHeaderControls('vsts')}
       >
-        <div className="pt-4 space-y-6">
+        <div className="pt-4 space-y-6 max-h-72 overflow-y-auto pr-2">
           {Object.entries(KEY_VSTS_CATEGORIZED).map(([category, vsts]) => (
             <div key={category}>
               <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>

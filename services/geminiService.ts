@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { SectionAnalysis } from "../types";
 
 const API_KEY = process.env.API_KEY;
 
@@ -391,24 +392,128 @@ export const findSynonyms = async (word: string): Promise<string[]> => {
   }
 };
 
-export const rephraseLine = async (line: string): Promise<string> => {
-  const prompt = `
-    You are an expert lyricist.
-    Your task is to rephrase the given line to improve its flow, imagery, or emotional impact, while keeping the original meaning.
-    Return only the rephrased line as a single string, with no extra text or quotes.
-    Original line: "${line}"
-  `;
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-    return response.text.trim();
-  } catch (error) {
-    console.error("Error rephrasing line:", error);
-    throw new Error("Failed to rephrase line.");
-  }
-};
+export const getThematicIdeas = async (word: string): Promise<string[]> => {
+    const prompt = `
+      You are a creative muse for songwriters.
+      Your task is to provide a list of thematic ideas, concepts, and evocative imagery related to the given word. Go beyond simple synonyms.
+      Provide only a JSON array of strings in your response.
+      Word: "${word}"
+    `;
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      console.error("Error getting thematic ideas:", error);
+      throw new Error("Failed to get thematic ideas.");
+    }
+  };
+  
+  export const generateImageryForLine = async (line: string): Promise<string[]> => {
+    const prompt = `
+      You are an expert lyricist with a mastery of "show, don't tell".
+      Your task is to take a simple, "telling" line of lyric and transform it into several more evocative, "showing" alternatives.
+      Provide a JSON array of 3-5 rephrased lines that use strong imagery and sensory details.
+      Original line: "${line}"
+    `;
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      console.error("Error generating imagery:", error);
+      throw new Error("Failed to generate imagery.");
+    }
+  };
+
+export const analyzeSection = async (sectionText: string): Promise<SectionAnalysis> => {
+    const prompt = `
+      You are a linguistic analysis tool for songwriters. Your task is to analyze a block of lyrics for its syllable count and rhyme scheme.
+      
+      **CRITICAL INSTRUCTIONS:**
+      1.  **Analyze Line-by-Line:** Process each line of the provided text. If the text is empty, return an empty "lines" array.
+      2.  **Count Syllables:** For each line, count the total number of syllables.
+      3.  **Identify Rhyme Scheme:** Identify rhyming words at the end of lines. Assign a rhyme key (A, B, C, etc.) to each group of rhyming lines. If a line does not rhyme with any other line, its rhyme key should be null. Use a standard AABB, ABAB, etc., format.
+      4.  **JSON OUTPUT:** Your entire response must be a single JSON object with a single key "lines". The value should be an array of objects, where each object represents a line and has three keys:
+          *   \`text\`: The original line of text (string).
+          *   \`syllables\`: The calculated syllable count (number).
+          *   \`rhymeKey\`: The rhyme group identifier (e.g., "A", "B") or \`null\` if it doesn't rhyme.
+      
+      **EXAMPLE:**
+      *   **Input Text:**
+          Roses are red
+          Violets are blue
+          Sugar is sweet
+          And so are you
+      *   **Your Output (as JSON):**
+          {
+            "lines": [
+              { "text": "Roses are red", "syllables": 4, "rhymeKey": null },
+              { "text": "Violets are blue", "syllables": 5, "rhymeKey": "A" },
+              { "text": "Sugar is sweet", "syllables": 4, "rhymeKey": null },
+              { "text": "And so are you", "syllables": 4, "rhymeKey": "A" }
+            ]
+          }
+  
+      **LYRICS TO ANALYZE:**
+      ---
+      ${sectionText}
+      ---
+  
+      Begin JSON Output:
+    `;
+  
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              lines: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    text: { type: Type.STRING },
+                    syllables: { type: Type.INTEGER },
+                    rhymeKey: { type: Type.STRING, nullable: true },
+                  },
+                  required: ["text", "syllables", "rhymeKey"]
+                }
+              }
+            },
+            required: ["lines"]
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      console.error("Error analyzing section:", error);
+      throw new Error("Failed to analyze section.");
+    }
+  };
+
 
 export const generateSpeech = async (text: string): Promise<string> => {
     try {

@@ -4,7 +4,7 @@ import { Icon } from './Icon';
 import { WordSmithPopup } from './WordSmithPopup';
 import { SuggestionsModal } from './SuggestionsModal';
 import { SkeletonLoader } from './SkeletonLoader';
-import { findRhymes, findSynonyms, rephraseLine, generateSpeech } from '../services/geminiService';
+import { findRhymes, findSynonyms, generateImageryForLine, getThematicIdeas, generateSpeech } from '../services/geminiService';
 import { SongSection } from '../types';
 import { stringifyLyrics, stripMetatags } from '../utils/lyricsParser';
 import { decode, decodeAudioData } from '../utils/audioUtils';
@@ -26,6 +26,7 @@ interface LyricsDisplayProps {
   onContinueSong: () => void;
   isContinuing: boolean;
   showMetatagEditor: boolean;
+  onClearLyricsAndTitle: () => void;
 }
 
 type PopupState = {
@@ -60,6 +61,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   onContinueSong,
   isContinuing,
   showMetatagEditor,
+  onClearLyricsAndTitle,
 }) => {
   const [copyText, setCopyText] = useState('Copy');
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selection: '', sectionId: '', selectionStart: 0, selectionEnd: 0 });
@@ -73,14 +75,14 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const handleCopy = () => {
-    const fullText = `${title}\n\n${stringifyLyrics(lyrics)}`;
+    const fullText = stringifyLyrics(lyrics);
     navigator.clipboard.writeText(fullText);
     setCopyText('Copied!');
     setTimeout(() => setCopyText('Copy'), 2000);
   };
 
   const handleDownload = () => {
-    const fullText = `${title}\n\n${stringifyLyrics(lyrics)}`;
+    const fullText = stringifyLyrics(lyrics);
     const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -151,7 +153,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   };
 
   const showPopup = (
-    event: React.MouseEvent<HTMLTextAreaElement>,
+    event: React.MouseEvent,
     section: SongSection,
     selection: string,
     selectionStart: number,
@@ -171,43 +173,48 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     }
   };
 
-  const handleAction = async (action: 'rhymes' | 'synonyms' | 'rephrase') => {
-    const { selection, selectionStart, selectionEnd, sectionId } = popup;
-    const targetSection = lyrics.find(s => s.id === sectionId);
-    if (!targetSection) return;
-
+  const handleAction = async (action: 'rhymes' | 'synonyms' | 'thematic' | 'imagery') => {
+    const { selection } = popup;
     setPopup(p => ({ ...p, visible: false }));
 
-    if (action === 'rephrase') {
-      setModal({ visible: true, title: `Rephrasing "${selection}"...`, suggestions: [], isLoading: true });
-      try {
-        const rephrased = await rephraseLine(selection);
-        const newContent = targetSection.content.substring(0, selectionStart) + rephrased + targetSection.content.substring(selectionEnd);
-        onUpdateSectionContent(sectionId, newContent);
-      } catch (e) {
-        console.error("Error rephrasing line:", e);
-      } finally {
-        setModal({ visible: false, title: '', suggestions: [], isLoading: false });
-      }
+    const wordToAnalyze = selection.trim().split(/\s+/).pop() || '';
+    if (!wordToAnalyze && (action === 'rhymes' || action === 'synonyms' || action === 'thematic')) {
       return;
     }
 
-    const wordToAnalyze = selection.split(' ').pop() || '';
-    if (!wordToAnalyze) return;
+    let results: string[] = [];
+    let title = '';
+    let promise: Promise<string[]>;
 
-    const actionTitle = action.charAt(0).toUpperCase() + action.slice(1);
-    setModal({ visible: true, title: `Finding ${action} for "${wordToAnalyze}"...`, suggestions: [], isLoading: true });
+    switch(action) {
+      case 'rhymes':
+        title = `Finding rhymes for "${wordToAnalyze}"...`;
+        promise = findRhymes(wordToAnalyze);
+        break;
+      case 'synonyms':
+        title = `Finding synonyms for "${wordToAnalyze}"...`;
+        promise = findSynonyms(wordToAnalyze);
+        break;
+      case 'thematic':
+        title = `Thematic ideas for "${wordToAnalyze}"...`;
+        promise = getThematicIdeas(wordToAnalyze);
+        break;
+      case 'imagery':
+        title = `Generating imagery for "${selection}"...`;
+        promise = generateImageryForLine(selection);
+        break;
+      default:
+        return;
+    }
+
+    setModal({ visible: true, title, suggestions: [], isLoading: true });
     
     try {
-      let results: string[] = [];
-      if (action === 'rhymes') {
-        results = await findRhymes(wordToAnalyze);
-      } else { // 'synonyms'
-        results = await findSynonyms(wordToAnalyze);
-      }
-      setModal({ visible: true, title: `${actionTitle} for "${wordToAnalyze}"`, suggestions: results, isLoading: false });
+      results = await promise;
+      const finalTitle = title.replace('...', `for "${action === 'imagery' ? selection : wordToAnalyze}"`);
+      setModal({ visible: true, title: finalTitle, suggestions: results, isLoading: false });
     } catch (e) {
-      console.error(`Error finding ${action}:`, e);
+      console.error(`Error performing action ${action}:`, e);
       setModal({ visible: true, title: `Error finding ${action}`, suggestions: [`Could not fetch suggestions.`], isLoading: false });
     }
   };
@@ -272,6 +279,10 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
           <StructureControls onAddSection={onAddSection} onApplyTemplate={onApplyTemplate} />
           {hasLyrics && !isLoading && (
             <div className="flex items-center space-x-3">
+              <Button onClick={onClearLyricsAndTitle} variant="secondary" className="!bg-rose-500/20 hover:!bg-rose-500/40 text-rose-200" title="Clear Title & Lyrics">
+                  <Icon name="delete" />
+                  Clear
+              </Button>
               <Button onClick={onContinueSong} variant="secondary" disabled={isContinuing}>
                 <Icon name="plus" />
                 {isContinuing ? 'Continuing...' : 'Continue'}

@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { Controls } from './components/Controls';
 import { LyricsDisplay } from './components/LyricsDisplay';
 import { generateLyricsStream, regenerateSectionStream, generateSunoPrompt, continueSongStream, generateRandomTopic } from './services/geminiService';
-import { GENRES, MOODS } from './constants';
+import { GENRES, MOODS, MOOD_COLORS } from './constants';
 import { SongSection } from './types';
 import { parseLyrics, stringifyLyrics, getNextSectionName } from './utils/lyricsParser';
 
@@ -34,6 +34,9 @@ const App: React.FC = () => {
   const [isContinuing, setIsContinuing] = useState<boolean>(false);
   const [showMetatagEditor, setShowMetatagEditor] = useState<boolean>(false);
   const [isSurprisingMe, setIsSurprisingMe] = useState<boolean>(false);
+  
+  const [bgStyle, setBgStyle] = useState({});
+  const [isPulsing, setIsPulsing] = useState(false);
 
   const SAVED_STATE_KEY = 'sunoLyricsCreatorState_v2';
 
@@ -71,6 +74,15 @@ const App: React.FC = () => {
     localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(stateToSave));
   }, [topic, title, isInstrumental, genre, mood, language, voiceStyle, bpm, lyrics, artists, sunoPromptTags, sunoExcludeTags, showMetatagEditor]);
   
+  // Effect for dynamic background based on mood
+  useEffect(() => {
+    const colors = MOOD_COLORS[mood] || MOOD_COLORS['None'];
+    setBgStyle({
+        backgroundImage: `linear-gradient(to bottom right, ${colors.from}, ${colors.via}, ${colors.to})`,
+    });
+    setIsPulsing(mood === 'Energetic');
+  }, [mood]);
+
   const handleInstrumentalChange = useCallback((enabled: boolean) => {
     setIsInstrumental(enabled);
     if (enabled) {
@@ -155,25 +167,60 @@ const App: React.FC = () => {
     try {
       const stream = generateLyricsStream(topic, title, genre, mood, language, voiceStyle, isInstrumental, '', artists, sunoPromptTags, bpm);
       
-      let fullResponse = '';
+      let buffer = '';
       let titleSet = false;
 
       for await (const chunk of stream) {
-        fullResponse += chunk;
+        buffer += chunk;
 
-        if (!titleSet && fullResponse.includes('\n')) {
-          const parts = fullResponse.split('\n');
-          const generatedTitle = parts[0];
-          const body = parts.slice(1).join('\n');
-          
-          setTitle(generatedTitle);
-          setLyrics(parseLyrics(body));
+        if (!titleSet && buffer.includes('\n')) {
+          const titleEndIndex = buffer.indexOf('\n');
+          setTitle(buffer.substring(0, titleEndIndex));
+          buffer = buffer.substring(titleEndIndex + 1);
           titleSet = true;
-        } else if (titleSet) {
-          const body = fullResponse.substring(fullResponse.indexOf('\n') + 1);
-          setLyrics(parseLyrics(body));
+        }
+
+        if (titleSet) {
+          const parsedSections = parseLyrics(buffer);
+          setLyrics(currentLyrics => {
+            if (parsedSections.length === 0) return currentLyrics;
+            
+            let newLyrics = [...currentLyrics];
+            
+            // Add new sections as they are parsed
+            if (parsedSections.length > newLyrics.length) {
+              // Mark previous section as done loading
+              if (newLyrics.length > 0) {
+                newLyrics[newLyrics.length - 1].isLoading = false;
+              }
+              const sectionsToAdd = parsedSections.slice(newLyrics.length);
+              newLyrics.push(...sectionsToAdd.map(s => ({ ...s, isLoading: true, content: '' })));
+            }
+
+            // Update content for all sections (new and old)
+            for (let i = 0; i < parsedSections.length; i++) {
+              if (newLyrics[i]) {
+                newLyrics[i].content = parsedSections[i].content;
+              }
+            }
+            
+            return newLyrics;
+          });
         }
       }
+
+      // After stream, mark final section as not loading
+      setLyrics(currentLyrics => {
+        if (currentLyrics.length > 0) {
+          const lastSection = currentLyrics[currentLyrics.length - 1];
+          if (lastSection.isLoading) {
+            const finalLyrics = [...currentLyrics];
+            finalLyrics[finalLyrics.length - 1] = { ...lastSection, isLoading: false };
+            return finalLyrics;
+          }
+        }
+        return currentLyrics;
+      });
 
     } catch (err) {
       setError('Failed to generate lyrics. Please try again.');
@@ -345,8 +392,18 @@ const App: React.FC = () => {
     setLyrics(result);
   };
 
+  const handleClearLyricsAndTitle = () => {
+    if (window.confirm('Are you sure you want to clear the title and all lyrics? This cannot be undone.')) {
+      setTitle('');
+      setLyrics([]);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/40 to-gray-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8">
+    <div 
+      className={`min-h-screen text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 transition-colors duration-[2000ms] ${isPulsing ? 'pulse-bg' : ''}`}
+      style={bgStyle}
+    >
       <div className="w-full max-w-6xl mx-auto">
         <Header />
         <main className="mt-8 grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -405,6 +462,7 @@ const App: React.FC = () => {
               onContinueSong={handleContinueSong}
               isContinuing={isContinuing}
               showMetatagEditor={showMetatagEditor}
+              onClearLyricsAndTitle={handleClearLyricsAndTitle}
             />
           </div>
         </main>

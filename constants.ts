@@ -2,25 +2,53 @@
 export const GENRES: string[] = [
   'None',
   ...[
+    'Afrobeats',
+    'Alternative Rock',
     'Ambient',
+    'Blues',
     'Chiptune',
+    'Classical',
     'Country',
+    'Dance',
+    'Death Metal',
+    'Disco',
+    'Drum and Bass',
+    'Dubstep',
     'Electronic',
+    'Emo',
     'Folk',
+    'Funk',
+    'Gospel',
+    'Grunge',
     'Hip-Hop',
+    'House',
     'Indie',
+    'Industrial',
     'J-Pop',
     'J-Rock',
     'JRPG BGM',
     'Jazz',
     'K-Pop',
+    'Latin',
     'Lo-fi',
     'Metal',
+    'New Wave',
+    'Opera',
     'Pop',
+    'Pop Punk',
+    'Psychedelic Rock',
+    'Punk Rock',
     'R&B',
+    'Reggae',
+    'Reggaeton',
     'Rock',
+    'Ska',
+    'Soul',
     'Soundtrack',
     'Synthwave',
+    'Techno',
+    'Trance',
+    'Trap',
     'Video Game BGM',
   ].sort()
 ];
@@ -29,19 +57,48 @@ export const MOODS: string[] = [
   'None',
   ...[
     'Aggressive',
+    'Anxious',
+    'Calm',
     'Chill',
+    'Comedic',
+    'Confident',
+    'Confused',
     'Creepy',
     'Dark',
+    'Dramatic',
     'Dreamy',
     'Energetic',
     'Epic',
+    'Euphoric',
+    'Fierce',
+    'Funky',
+    'Glorious',
+    'Goofy',
+    'Groovy',
     'Happy',
+    'Heartbreak',
     'Hopeful',
+    'Introspective',
+    'Lonely',
     'Melancholic',
     'Mysterious',
+    'Nostalgic',
+    'Peaceful',
+    'Playful',
+    'Powerful',
+    'Quirky',
+    'Rebellious',
+    'Reflective',
     'Romantic',
     'Sad',
+    'Sensual',
+    'Serene',
+    'Silly',
+    'Somber',
+    'Tense',
+    'Triumphant',
     'Uplifting',
+    'Whimsical',
   ].sort()
 ];
 
@@ -72,12 +129,13 @@ export const SONG_STRUCTURES = [
 
 export const KEY_INSTRUMENTS: Record<string, string[]> = {
     'Keyboards & Synths': [
-        'Accordion', 'Choir Synthesizer', 'Electric Piano', 'Hammond B3 Organ',
-        'Keyboard', 'Modular Synth', 'Organ', 'Piano', 'Rhodes Piano', 'Synthesizer',
-        'Theremin', 'Vocoder', 'Wurlitzer'
+        '8-bit Synth', 'Accordion', 'Choir Synthesizer', 'Chiptune Synth', 'Electric Piano',
+        'FM Synth Bass', 'Hammond B3 Organ', 'Keyboard', 'Modular Synth', 'Organ',
+        'Overdriven Organ', 'Piano', 'Rhodes Piano', 'Sawtooth Synth Lead', 'Square Wave Synth',
+        'Synth Pad', 'Synthesizer', 'Theremin', 'Vocoder', 'Wavetable Synth', 'Wurlitzer'
     ].sort(),
     'Guitars & Bass': [
-        'Acoustic Guitar', 'Bass', 'Bass Guitar', 'Electric Guitar', 'Symphonic Guitar'
+        'Acoustic Guitar', 'Bass', 'Bass Guitar', 'Electric Guitar', 'Overdriven Guitar', 'Symphonic Guitar'
     ].sort(),
     'Strings': [
         'Cello', 'Harp', 'Strings', 'Violin'
@@ -89,8 +147,8 @@ export const KEY_INSTRUMENTS: Record<string, string[]> = {
         'Bagpipes', 'Clarinet', 'Flute', 'Harmonica', 'Oboe', 'Saxophone', 'Shakuhachi'
     ].sort(),
     'Percussion': [
-        '808 Drum Machine', '909 Drum Machine', 'Cajon', 'Congas', 'Djembe', 'Drums',
-        'Glockenspiel', 'Handpan', 'Kalimba', 'Marimba', 'Percussion', 'Tabla',
+        '8-bit Drums', '808 Drum Machine', '909 Drum Machine', 'Cajon', 'Congas', 'Djembe', 'Drums',
+        'Glockenspiel', 'Handpan', 'Kalimba', 'Marimba', 'Percussion', 'Retro Drum Machine', 'Tabla',
         'Taiko Drums', 'Xylophone'
     ].sort(),
     'Folk & World': [
@@ -103,11 +161,11 @@ export const KEY_INSTRUMENTS: Record<string, string[]> = {
 
 export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
     'Rhythm & Tempo': [
-        'Driving Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Upbeat Tempo'
+        'Driving Rhythm', 'Intense Boss Battle Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Upbeat Tempo'
     ].sort(),
     'Mixing & Effects': [
-        '80s Gated Reverb', 'Atmospheric', 'Crisp Mix', 'Ethereal Pads', 'Gritty Distortion',
-        'Heavy Reverb', 'Sidechain Compression', 'Vintage Tape Saturation'
+        '80s Gated Reverb', 'Atmospheric', 'Bitcrushing', 'Crisp Mix', 'Ethereal Pads', 'Gritty Distortion',
+        'Heavy Reverb', 'Lo-fi Filtering', 'Sidechain Compression', 'Vintage Tape Saturation'
     ].sort(),
     'Harmony & Melody': [
         'Arpeggiated', 'Catchy Melodies', 'Dissonant Chords', 'Lush Harmonies', 'Melodic Bassline',
@@ -120,13 +178,19 @@ export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
     'Genre & Vibe': [
         'City Pop Groove', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic', 'Modern Pop Sheen',
         'Shibuya-kei Influence', 'Technical Guitar Riff', 'Twangy Guitar', 'Warm Analog Synths'
+    ].sort(),
+    'Retro & Chiptune': [
+        '8-bit Sound Design', 'Bitcrushed Drums', 'Catchy 8-bit Melody', 'Chiptune Harmonies',
+        'Earthbound-inspired Sample Chops', 'Fast Arpeggios', 'Quirky Sound Effects (SFX)',
+        'SNES-style Reverb', 'Video Game OST Feel'
     ].sort()
 };
 
 export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
     'Synthesizers': [
-        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Massive X', 'Moog Subsequent',
-        'Nexus 4', 'Omnisphere', 'Serum', 'Spire', 'Supersaw Lead', 'Vocaloid Synth'
+        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive X', 'Moog Subsequent',
+        'NES Synth', 'Nexus 4', 'Omnisphere', 'Serum', 'SID Chip Emulation', 'Spire', 'Supersaw Lead',
+        'Vocaloid Synth', 'Yamaha DX7-style FM Pad'
     ].sort(),
     'Bass': [
         '808 Sub Bass', 'Wobbly Bass'
@@ -134,8 +198,29 @@ export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
     'Sample Libraries': [
         'Arturia Piano', 'EastWest Hollywood Strings', 'Kontakt Noire Piano', 'Spitfire Albion One'
     ].sort(),
+    'Samples & Soundfonts': [
+      'Earthbound Soundfont', 'Orchestral Hit Stab', 'Retro Game Samples', 'SNES Soundfont'
+    ].sort(),
     'Effects & Processing': [
         'Bitcrushed', 'Glitch Effects', 'Granular Texture', 'Professional Mastering',
         'Risers/Sweeps', 'Trance Gate', 'Warped Vocal Sample'
     ].sort()
+};
+
+export const MOOD_COLORS: Record<string, { from: string; via: string; to: string }> = {
+  'None': { from: '#111827', via: 'rgba(76, 29, 149, 0.4)', to: '#111827' },
+  'Happy': { from: '#f59e0b', via: 'rgba(234, 179, 8, 0.3)', to: '#111827' },
+  'Sad': { from: '#1e3a8a', via: 'rgba(55, 65, 81, 0.4)', to: '#111827' },
+  'Melancholic': { from: '#312e81', via: 'rgba(88, 28, 135, 0.3)', to: '#111827' },
+  'Energetic': { from: '#9f1239', via: 'rgba(236, 72, 153, 0.4)', to: '#111827' },
+  'Aggressive': { from: '#991b1b', via: 'rgba(239, 68, 68, 0.4)', to: '#111827' },
+  'Chill': { from: '#0d9488', via: 'rgba(6, 182, 212, 0.3)', to: '#111827' },
+  'Creepy': { from: '#171717', via: 'rgba(131, 24, 67, 0.4)', to: '#111827' },
+  'Dark': { from: '#171717', via: 'rgba(23, 37, 84, 0.4)', to: '#111827' },
+  'Dreamy': { from: '#86198f', via: 'rgba(217, 70, 239, 0.3)', to: '#111827' },
+  'Epic': { from: '#581c87', via: 'rgba(212, 175, 55, 0.3)', to: '#111827' },
+  'Hopeful': { from: '#065f46', via: 'rgba(16, 185, 129, 0.3)', to: '#111827' },
+  'Mysterious': { from: '#4a044e', via: 'rgba(17, 24, 39, 0.5)', to: '#111827' },
+  'Romantic': { from: '#be185d', via: 'rgba(251, 146, 60, 0.3)', to: '#111827' },
+  'Uplifting': { from: '#0ea5e9', via: 'rgba(250, 204, 21, 0.4)', to: '#111827' }
 };

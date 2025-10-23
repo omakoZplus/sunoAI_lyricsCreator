@@ -3,7 +3,7 @@ import React from 'react';
 interface WordSmithPopupProps {
   x: number;
   y: number;
-  onAction: (action: 'rhymes' | 'synonyms' | 'rephrase') => void;
+  onAction: (action: 'rhymes' | 'synonyms' | 'thematic' | 'imagery') => void;
 }
 
 export const WordSmithPopup: React.FC<WordSmithPopupProps> = ({ x, y, onAction }) => {
@@ -30,10 +30,16 @@ export const WordSmithPopup: React.FC<WordSmithPopupProps> = ({ x, y, onAction }
         Synonyms
       </button>
       <button
-        onClick={() => onAction('rephrase')}
+        onClick={() => onAction('thematic')}
+        className="px-3 py-1.5 text-sm text-gray-200 hover:bg-purple-600/50 transition-colors"
+      >
+        Thematic Ideas
+      </button>
+      <button
+        onClick={() => onAction('imagery')}
         className="px-3 py-1.5 text-sm text-gray-200 hover:bg-purple-600/50 rounded-r-md transition-colors"
       >
-        Rephrase Line
+        Generate Imagery
       </button>
     </div>
   );

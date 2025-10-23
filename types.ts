@@ -4,3 +4,13 @@ export interface SongSection {
   content: string;
   isLoading?: boolean;
 }
+
+export interface AnalyzedLine {
+  text: string;
+  syllables: number;
+  rhymeKey: string | null;
+}
+
+export interface SectionAnalysis {
+  lines: AnalyzedLine[];
+}
