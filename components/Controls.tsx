@@ -43,6 +43,9 @@ interface ControlsProps {
   setShowMetatagEditor: (show: boolean) => void;
   previousSunoPromptTags: string[] | null;
   onUndoStyleSuggestion: () => void;
+  onSurpriseMe: () => void;
+  isSurprisingMe: boolean;
+  onClearSunoPromptTags: () => void;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -78,6 +81,9 @@ export const Controls: React.FC<ControlsProps> = ({
   setShowMetatagEditor,
   previousSunoPromptTags,
   onUndoStyleSuggestion,
+  onSurpriseMe,
+  isSurprisingMe,
+  onClearSunoPromptTags,
 }) => {
   const [promptCopyText, setPromptCopyText] = useState('Copy');
   const [charCountExceeded, setCharCountExceeded] = useState(false);
@@ -175,9 +181,15 @@ export const Controls: React.FC<ControlsProps> = ({
       <Accordion title="Core Idea" defaultOpen>
         <div className="space-y-6 pt-4">
           <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-gray-300 mb-2">
-              Song Topic
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label htmlFor="topic" className="block text-sm font-medium text-gray-300">
+                Song Topic
+              </label>
+              <Button onClick={onSurpriseMe} disabled={isSurprisingMe} variant="secondary" className="!py-1 !px-2.5 text-xs">
+                <Icon name="regenerate" className="w-4 h-4" />
+                {isSurprisingMe ? 'Thinking...' : 'Surprise Me'}
+              </Button>
+            </div>
             <textarea
               id="topic"
               value={topic}
@@ -341,7 +353,16 @@ export const Controls: React.FC<ControlsProps> = ({
       <div className="pt-6 border-t border-gray-700 space-y-6">
           <div className="space-y-4">
               <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-purple-300">Suno Style Prompt</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-purple-300">Suno Style Prompt</h3>
+                    <button 
+                      onClick={onClearSunoPromptTags} 
+                      className="text-xs text-gray-500 hover:text-red-400 transition-colors disabled:text-gray-600 disabled:hover:text-gray-600 disabled:cursor-not-allowed"
+                      disabled={sunoPromptTags.length === 0}
+                    >
+                      Clear All
+                    </button>
+                  </div>
                   <div className={`flex items-center gap-2 transition-transform duration-300 ${charCountExceeded ? 'scale-110' : ''}`}>
                     <CharCountCircle count={charCount} limit={1000} color="purple" />
                     <span className={`font-mono text-sm ${charCount > 1000 ? 'text-red-400' : 'text-gray-400'}`}>/ 1000</span>

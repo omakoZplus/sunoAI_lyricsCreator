@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Controls } from './components/Controls';
 import { LyricsDisplay } from './components/LyricsDisplay';
-import { generateLyricsStream, regenerateSectionStream, generateSunoPrompt, continueSongStream } from './services/geminiService';
+import { generateLyricsStream, regenerateSectionStream, generateSunoPrompt, continueSongStream, generateRandomTopic } from './services/geminiService';
 import { GENRES, MOODS } from './constants';
 import { SongSection } from './types';
 import { parseLyrics, stringifyLyrics, getNextSectionName } from './utils/lyricsParser';
@@ -33,6 +33,7 @@ const App: React.FC = () => {
 
   const [isContinuing, setIsContinuing] = useState<boolean>(false);
   const [showMetatagEditor, setShowMetatagEditor] = useState<boolean>(false);
+  const [isSurprisingMe, setIsSurprisingMe] = useState<boolean>(false);
 
   const SAVED_STATE_KEY = 'sunoLyricsCreatorState_v2';
 
@@ -112,6 +113,31 @@ const App: React.FC = () => {
       setSunoExcludeTags(defaultExcludeTags);
       setPromptError(null);
       setPreviousSunoPromptTags(null);
+    }
+  };
+
+  const handleSurpriseMe = async () => {
+    setIsSurprisingMe(true);
+    setError(null);
+    try {
+      const availableGenres = GENRES.filter(g => g !== 'None');
+      const availableMoods = MOODS.filter(m => m !== 'None');
+      
+      const randomGenre = availableGenres[Math.floor(Math.random() * availableGenres.length)];
+      const randomMood = availableMoods[Math.floor(Math.random() * availableMoods.length)];
+
+      const newTopic = await generateRandomTopic(randomGenre, randomMood);
+
+      setGenre(randomGenre);
+      setMood(randomMood);
+      setTopic(newTopic);
+      setTitle(''); // Clear title as it's a new idea
+      
+    } catch (err) {
+      setError('Could not generate a surprise topic. Please try again.');
+      console.error(err);
+    } finally {
+      setIsSurprisingMe(false);
     }
   };
 
@@ -244,7 +270,7 @@ const App: React.FC = () => {
       setPreviousSunoPromptTags(sunoPromptTags); // Save for undo
       const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm, sunoPromptTags);
       
-      const combinedTags = Array.from(new Set([...sunoPromptTags, ...generatedTags]));
+      const combinedTags = Array.from(new Set(generatedTags));
 
       let currentPrompt = '';
       const finalTags: string[] = [];
@@ -272,6 +298,10 @@ const App: React.FC = () => {
       setSunoPromptTags(previousSunoPromptTags);
       setPreviousSunoPromptTags(null);
     }
+  };
+
+  const handleClearSunoPromptTags = () => {
+    setSunoPromptTags([]);
   };
 
   const handleUpdateSectionContent = (sectionId: string, content: string) => {
@@ -354,6 +384,9 @@ const App: React.FC = () => {
               setShowMetatagEditor={setShowMetatagEditor}
               previousSunoPromptTags={previousSunoPromptTags}
               onUndoStyleSuggestion={handleUndoStyleSuggestion}
+              onSurpriseMe={handleSurpriseMe}
+              isSurprisingMe={isSurprisingMe}
+              onClearSunoPromptTags={handleClearSunoPromptTags}
             />
           </div>
           <div className="md:col-span-7">

@@ -23,6 +23,18 @@ const generateContentStreamWithRetry = async (prompt: string) => {
   }
 };
 
+const generateContentWithRetry = async (prompt: string) => {
+    try {
+      return await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+      });
+    } catch (error) {
+      console.error("Error generating content with Gemini API:", error);
+      throw new Error("Failed to communicate with the AI model.");
+    }
+  };
+
 export async function* generateLyricsStream(
   topic: string, 
   userInputTitle: string, 
@@ -237,7 +249,7 @@ export const generateSunoPrompt = async (
     existingTags: string[]
 ): Promise<string[]> => {
     const prompt = `
-    You are a prompt engineering expert specializing in the Suno AI music generator (v5). Your task is to create a list of highly-detailed, effective "Style of Music" descriptors based on user-provided details. The goal is to generate a rich set of tags that will guide the AI to create a specific sound.
+    You are a prompt engineering expert specializing in the Suno AI music generator (v5). Your task is to create a list of highly-detailed, effective "Style of Music" descriptors based on user-provided details. The goal is to generate a rich, complete set of tags that will guide the AI to create a specific sound.
 
     **CRITICAL INSTRUCTIONS:**
     1.  **ABSOLUTELY NO ARTIST NAMES:** You must never mention any artist names in the final output. Analyze the style of the inspirational artists and translate it into descriptive terms (e.g., instead of "like Queen", describe it as "epic 70s stadium rock", "multi-tracked vocal harmonies", "flamboyant piano", "soaring guitar solos").
@@ -248,9 +260,7 @@ export const generateSunoPrompt = async (
         *   Tempo & Rhythm: (e.g., "120 BPM driving house beat", "slow, melancholic tempo", "complex syncopated rhythms"). If a specific BPM is provided, use it.
         *   Production & Atmosphere: Describe the overall feel and a production quality (e.g., "polished modern production", "lo-fi vintage aesthetic with tape hiss", "cavernous reverb", "epic cinematic soundscape", "intimate and acoustic").
     4.  **FORMAT:** The output must be a JSON array of strings.
-    5.  **BE ADDITIVE & COMPLEMENTARY:** The user has already selected some tags. Your primary goal is to generate **new, complementary** tags that enhance the existing style.
-        *   **DO NOT** repeat or rephrase tags that are already in the "User's Existing Tags" list.
-        *   Your suggestions should add new dimensions to the sound (e.g., if the user has "rock", you could suggest "gritty bassline", "distorted guitar", "powerful drum fills").
+    5.  **GENERATE A COMPLETE SET:** Your task is to generate a comprehensive list of tags that defines the entire sound, based on the user's request. If the user has provided base tags, you should incorporate their ideas into the final list, ensuring a cohesive style. For example, if the user wants a "Sad" mood and provides a "Ukulele" tag, generate a style for a sad ukulele song.
     
     ${isInstrumental
       ? `
@@ -272,15 +282,13 @@ export const generateSunoPrompt = async (
     -   **Track Type:** ${isInstrumental ? 'Instrumental' : 'Vocal'}
     -   **Artists for Inspiration (translate their style, do not name them):** ${artists || 'None'}
     -   **Voice Style:** ${isInstrumental ? 'N/A' : (voiceStyle || 'Not specified by user, you can infer one.')}
+    -   **User-Selected Base Tags (to incorporate into the style):** ${existingTags.length > 0 ? existingTags.join(', ') : 'None'}
 
-    **User's Existing Tags (DO NOT REPEAT):**
-    - ${existingTags.length > 0 ? existingTags.join(', ') : 'None'}
-
-    Based on all this, generate the JSON array of **new, complementary** "Style of Music" tags.
+    Based on all this, generate the complete JSON array of "Style of Music" tags.
 
     **High-Quality Example:**
-    *   **User Input:** Genre: "Rock", Mood: "Energetic", Artists: "AC/DC, Guns N' Roses", Voice Style: "Male", Existing Tags: ["high-energy 80s hard rock", "anthemic stadium rock"]
-    *   **Your Output (as JSON):** ["driving 4/4 drum beat", "powerful distorted electric guitar riff", "gritty high-pitched male rock vocals", "blistering guitar solo", "gang backing vocals", "raw and powerful production"]
+    *   **User Input:** Genre: "Rock", Mood: "Energetic", Artists: "AC/DC, Guns N' Roses", Voice Style: "Male", Base Tags: ["Electric Guitar"]
+    *   **Your Output (as JSON):** ["high-energy 80s hard rock", "anthemic stadium rock", "driving 4/4 drum beat", "powerful distorted electric guitar riff", "gritty high-pitched male rock vocals", "blistering guitar solo", "gang backing vocals", "raw and powerful production", "Electric Guitar"]
   `;
 
   try {
@@ -305,6 +313,30 @@ export const generateSunoPrompt = async (
     console.error("Error generating Suno prompt with Gemini API:", error);
     throw new Error("Failed to communicate with the AI model for prompt generation.");
   }
+};
+
+export const generateRandomTopic = async (genre: string, mood: string): Promise<string> => {
+    const prompt = `
+    You are a creative muse for songwriters.
+    Your task is to generate a single, creative, and detailed song topic based on a given genre and mood.
+    The topic should be a short paragraph that tells a miniature story or presents a compelling scenario, perfect for sparking lyrical ideas.
+    
+    **CRITICAL INSTRUCTIONS:**
+    1.  **BE DETAILED:** Don't just give a title. Describe a scene, a feeling, a conflict, or a character.
+    2.  **MATCH THE VIBE:** The topic must perfectly align with the provided genre and mood.
+    3.  **OUTPUT FORMAT:** Return ONLY the topic text. Do not include any titles, headings, or extra explanations.
+    
+    **Genre:** "${genre}"
+    **Mood:** "${mood}"
+
+    **High-Quality Example:**
+    *   **Input:** Genre: "Synthwave", Mood: "Melancholic"
+    *   **Your Output:** The last working android in a neon-drenched, rain-slicked metropolis searches for a memory chip containing the consciousness of its creator, all while being hunted by corporate agents who see it as obsolete technology. It's a story of love, loss, and identity under the perpetual twilight of a dystopian future.
+    
+    Now, generate a topic for the request above.
+    `;
+    const response = await generateContentWithRetry(prompt);
+    return response.text.trim();
 };
 
 export const findRhymes = async (word: string): Promise<string[]> => {
