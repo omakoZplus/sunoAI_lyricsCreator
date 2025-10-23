@@ -26,6 +26,7 @@ const App: React.FC = () => {
 
   const [artists, setArtists] = useState<string>('');
   const [sunoPromptTags, setSunoPromptTags] = useState<string[]>([]);
+  const [previousSunoPromptTags, setPreviousSunoPromptTags] = useState<string[] | null>(null);
   const [sunoExcludeTags, setSunoExcludeTags] = useState<string[]>(defaultExcludeTags);
   const [isPromptLoading, setIsPromptLoading] = useState<boolean>(false);
   const [promptError, setPromptError] = useState<string | null>(null);
@@ -68,6 +69,30 @@ const App: React.FC = () => {
     };
     localStorage.setItem(SAVED_STATE_KEY, JSON.stringify(stateToSave));
   }, [topic, title, isInstrumental, genre, mood, language, voiceStyle, bpm, lyrics, artists, sunoPromptTags, sunoExcludeTags, showMetatagEditor]);
+  
+  const handleInstrumentalChange = useCallback((enabled: boolean) => {
+    setIsInstrumental(enabled);
+    if (enabled) {
+      setLanguage('No Language');
+    } else {
+      if (language === 'No Language') {
+        setLanguage('English');
+      }
+    }
+  }, [language]);
+
+  // Effect to handle the [Instrumental] tag in the artist input
+  useEffect(() => {
+    const instrumentalTagRegex = /\[instrumental\]/i;
+    if (instrumentalTagRegex.test(artists)) {
+      // Remove the tag from the artist string
+      setArtists(artists.replace(instrumentalTagRegex, '').trim());
+      // Set the mode to instrumental, but only if it's not already set
+      if (!isInstrumental) {
+        handleInstrumentalChange(true);
+      }
+    }
+  }, [artists, isInstrumental, handleInstrumentalChange]);
 
   const handleClearSession = () => {
     if (window.confirm('Are you sure you want to start a new song? This will clear all current input and lyrics.')) {
@@ -86,6 +111,7 @@ const App: React.FC = () => {
       setSunoPromptTags([]);
       setSunoExcludeTags(defaultExcludeTags);
       setPromptError(null);
+      setPreviousSunoPromptTags(null);
     }
   };
 
@@ -98,6 +124,7 @@ const App: React.FC = () => {
     setError(null);
     setLyrics([]);
     setTitle('');
+    setPreviousSunoPromptTags(null);
     
     try {
       const stream = generateLyricsStream(topic, title, genre, mood, language, voiceStyle, isInstrumental, '', artists, sunoPromptTags, bpm);
@@ -214,20 +241,10 @@ const App: React.FC = () => {
     setIsPromptLoading(true);
     setPromptError(null);
     try {
+      setPreviousSunoPromptTags(sunoPromptTags); // Save for undo
       const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm, sunoPromptTags);
       
-      const baseTags: string[] = [];
-      if (genre && genre !== 'None') {
-        baseTags.push(genre);
-      }
-      if (mood && mood !== 'None') {
-        baseTags.push(mood);
-      }
-      if (bpm) {
-        baseTags.push(`${bpm} BPM`);
-      }
-
-      const combinedTags = Array.from(new Set([...baseTags, ...sunoPromptTags, ...generatedTags]));
+      const combinedTags = Array.from(new Set([...sunoPromptTags, ...generatedTags]));
 
       let currentPrompt = '';
       const finalTags: string[] = [];
@@ -250,14 +267,10 @@ const App: React.FC = () => {
     }
   }, [topic, genre, mood, artists, voiceStyle, isInstrumental, sunoPromptTags, bpm]);
 
-  const handleInstrumentalChange = (enabled: boolean) => {
-    setIsInstrumental(enabled);
-    if (enabled) {
-      setLanguage('No Language');
-    } else {
-      if (language === 'No Language') {
-        setLanguage('English');
-      }
+  const handleUndoStyleSuggestion = () => {
+    if (previousSunoPromptTags !== null) {
+      setSunoPromptTags(previousSunoPromptTags);
+      setPreviousSunoPromptTags(null);
     }
   };
 
@@ -339,6 +352,8 @@ const App: React.FC = () => {
               onClearSession={handleClearSession}
               showMetatagEditor={showMetatagEditor}
               setShowMetatagEditor={setShowMetatagEditor}
+              previousSunoPromptTags={previousSunoPromptTags}
+              onUndoStyleSuggestion={handleUndoStyleSuggestion}
             />
           </div>
           <div className="md:col-span-7">

@@ -1,4 +1,3 @@
-
 import { SongSection } from '../types';
 
 const SECTION_TAG_REGEX = /^( *)\[(.*?)\]( *)/;
@@ -114,4 +113,9 @@ export const getNextSectionName = (type: string, existingSections: SongSection[]
     }
 
     return `${baseType} ${relevantSections.length + 1}`;
+};
+
+export const stripMetatags = (text: string): string => {
+    // This regex removes bracketed tags, e.g., [Instrument: Guitar], and any trailing newline
+    return text.replace(/\[.*?\]\n?/g, '').trim();
 };

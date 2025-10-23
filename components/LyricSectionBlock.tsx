@@ -1,8 +1,8 @@
-
 import React, { useRef, useEffect } from 'react';
 import { SongSection } from '../types';
 import { Icon } from './Icon';
 import { MetatagEditor } from './MetatagEditor';
+import { SkeletonLoader } from './SkeletonLoader';
 
 interface LyricSectionBlockProps {
   section: SongSection;
@@ -17,6 +17,9 @@ interface LyricSectionBlockProps {
     selectionStart: number,
     selectionEnd: number
   ) => void;
+  onPlaySection: (sectionId: string) => void;
+  isSpeechLoading: boolean;
+  isSpeaking: boolean;
   showMetatagEditor: boolean;
   onDragStart: (index: number) => void;
   onDragEnter: (index: number) => void;
@@ -30,6 +33,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
   onRegenerate,
   onDelete,
   onShowPopup,
+  onPlaySection,
+  isSpeechLoading,
+  isSpeaking,
   showMetatagEditor,
   onDragStart,
   onDragEnter,
@@ -69,6 +75,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-gray-300">{section.type}</h3>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => onPlaySection(section.id)} title="Play Section" className="text-gray-400 hover:text-purple-400" disabled={isSpeechLoading}>
+                      {isSpeechLoading ? <Icon name="loading" className="w-4 h-4 animate-spin" /> : isSpeaking ? <Icon name="stop" className="w-4 h-4" /> : <Icon name="play" className="w-4 h-4" />}
+                    </button>
                     <button onClick={() => onRegenerate(section.id)} title="Regenerate Section" className="text-gray-400 hover:text-purple-400">
                         <Icon name="regenerate" className="w-4 h-4" />
                     </button>
@@ -77,27 +86,28 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
                     </button>
                 </div>
             </div>
-            <textarea
-                ref={textareaRef}
-                value={section.content}
-                onChange={(e) => onUpdateContent(section.id, e.target.value)}
-                onMouseUp={handleMouseUp}
-                placeholder={`Lyrics for ${section.type}...`}
-                className="w-full bg-transparent text-gray-200 resize-none focus:outline-none placeholder-gray-500 text-base leading-relaxed overflow-hidden"
-                rows={1}
-            />
-            {showMetatagEditor && (
+
+            {section.isLoading ? (
+                <SkeletonLoader lines={4} className="py-1" />
+            ) : (
+                <textarea
+                    ref={textareaRef}
+                    value={section.content}
+                    onChange={(e) => onUpdateContent(section.id, e.target.value)}
+                    onMouseUp={handleMouseUp}
+                    placeholder={`Lyrics for ${section.type}...`}
+                    className="w-full bg-transparent text-gray-200 resize-none focus:outline-none placeholder-gray-500 text-base leading-relaxed overflow-hidden"
+                    rows={1}
+                />
+            )}
+            
+            {showMetatagEditor && !section.isLoading && (
               <MetatagEditor 
                 section={section}
                 onUpdateContent={(content) => onUpdateContent(section.id, content)}
               />
             )}
         </div>
-        {section.isLoading && (
-            <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center rounded-lg">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-400"></div>
-            </div>
-        )}
     </div>
   );
 };

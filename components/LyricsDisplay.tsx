@@ -1,13 +1,13 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
-import { Waveform } from './Waveform';
 import { WordSmithPopup } from './WordSmithPopup';
 import { SuggestionsModal } from './SuggestionsModal';
-import { findRhymes, findSynonyms, rephraseLine } from '../services/geminiService';
+import { SkeletonLoader } from './SkeletonLoader';
+import { findRhymes, findSynonyms, rephraseLine, generateSpeech } from '../services/geminiService';
 import { SongSection } from '../types';
-import { stringifyLyrics } from '../utils/lyricsParser';
+import { stringifyLyrics, stripMetatags } from '../utils/lyricsParser';
+import { decode, decodeAudioData } from '../utils/audioUtils';
 import { LyricSectionBlock } from './LyricSectionBlock';
 import { StructureControls } from './StructureControls';
 
@@ -67,6 +67,10 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   const displayRef = useRef<HTMLDivElement>(null);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  
+  const [nowPlaying, setNowPlaying] = useState<{ source: AudioBufferSourceNode, sectionId: string } | null>(null);
+  const [isSpeechLoading, setIsSpeechLoading] = useState<string | null>(null); // holds sectionId
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const handleCopy = () => {
     const fullText = `${title}\n\n${stringifyLyrics(lyrics)}`;
@@ -88,6 +92,63 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+  const handlePlaySection = async (sectionId: string) => {
+    // Stop any currently playing audio
+    if (nowPlaying) {
+      nowPlaying.source.stop();
+      setNowPlaying(null);
+      // If the clicked section was the one playing, we just stop it.
+      if (nowPlaying.sectionId === sectionId) {
+        return;
+      }
+    }
+    
+    // Initialize AudioContext on first use
+    if (!audioCtxRef.current) {
+        try {
+            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        } catch (e) {
+            console.error("Web Audio API is not supported in this browser.", e);
+            alert("Sorry, the audio preview feature is not supported in your browser.");
+            return;
+        }
+    }
+    const audioCtx = audioCtxRef.current;
+
+    const section = lyrics.find(s => s.id === sectionId);
+    if (!section) return;
+
+    const textToSpeak = stripMetatags(section.content);
+    if (!textToSpeak) {
+        alert("This section has no lyrics to read.");
+        return;
+    }
+
+    setIsSpeechLoading(sectionId);
+    try {
+        const base64Audio = await generateSpeech(textToSpeak);
+        const audioBytes = decode(base64Audio);
+        const audioBuffer = await decodeAudioData(audioBytes, audioCtx, 24000, 1);
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        
+        source.onended = () => {
+            setNowPlaying(null);
+        };
+        
+        source.start();
+        setNowPlaying({ source, sectionId });
+
+    } catch (err) {
+        console.error("Failed to play audio:", err);
+        alert("Could not generate audio preview. Please try again.");
+    } finally {
+        setIsSpeechLoading(null);
+    }
+  };
 
   const showPopup = (
     event: React.MouseEvent<HTMLTextAreaElement>,
@@ -97,7 +158,6 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     selectionEnd: number,
   ) => {
     const displayRect = displayRef.current?.getBoundingClientRect();
-    const targetRect = (event.target as HTMLElement).getBoundingClientRect();
     if (displayRect) {
         setPopup({
             visible: true,
@@ -172,6 +232,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
             onMouseLeave={() => setPopup(p => ({ ...p, visible: false }))}
           >
             {popup.visible && <WordSmithPopup {...popup} onAction={handleAction} />}
+            
+            {isLoading && <SkeletonLoader lines={12} />}
+            
             {lyrics.map((section, index) => (
               <LyricSectionBlock 
                 key={section.id} 
@@ -180,6 +243,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
                 onRegenerate={onRegenerateSection}
                 onDelete={onDeleteSection}
                 onShowPopup={showPopup}
+                onPlaySection={handlePlaySection}
+                isSpeechLoading={isSpeechLoading === section.id}
+                isSpeaking={nowPlaying?.sectionId === section.id}
                 showMetatagEditor={showMetatagEditor}
                 // Drag and drop props
                 index={index}
@@ -190,12 +256,6 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
             ))}
           </div>
 
-          {isLoading && (
-            <div className="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center rounded-2xl z-10">
-              <Waveform />
-              <p className="mt-4 text-lg text-purple-300 animate-pulse">Writing a masterpiece...</p>
-            </div>
-          )}
           {!isLoading && !hasLyrics && !error && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
               <p className="text-gray-500 text-center">Enter a topic and generate some lyrics!</p>

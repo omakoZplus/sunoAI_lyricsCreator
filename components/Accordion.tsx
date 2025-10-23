@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Icon } from './Icon';
+import { InfoToggle } from './InfoToggle';
 
 interface AccordionProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  infoText?: string;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false }) => {
+export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false, infoText }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -17,7 +19,10 @@ export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOp
         className="w-full flex justify-between items-center py-3 text-left text-base font-medium text-gray-200"
         aria-expanded={isOpen}
       >
-        <span>{title}</span>
+        <div className="flex items-center gap-2">
+          <span>{title}</span>
+          {infoText && <InfoToggle text={infoText} />}
+        </div>
         <Icon name="chevron" className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div

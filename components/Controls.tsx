@@ -41,6 +41,8 @@ interface ControlsProps {
   onClearSession: () => void;
   showMetatagEditor: boolean;
   setShowMetatagEditor: (show: boolean) => void;
+  previousSunoPromptTags: string[] | null;
+  onUndoStyleSuggestion: () => void;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -74,6 +76,8 @@ export const Controls: React.FC<ControlsProps> = ({
   onClearSession,
   showMetatagEditor,
   setShowMetatagEditor,
+  previousSunoPromptTags,
+  onUndoStyleSuggestion,
 }) => {
   const [promptCopyText, setPromptCopyText] = useState('Copy');
   const [charCountExceeded, setCharCountExceeded] = useState(false);
@@ -234,7 +238,10 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
 
-      <Accordion title="Key Instruments">
+      <Accordion 
+        title="Key Instruments"
+        infoText="Select specific instruments to feature in your song. The AI will use these tags to build the core sound palette for the style prompt."
+      >
         <div className="pt-4 space-y-6">
           {Object.entries(KEY_INSTRUMENTS).map(([category, instruments]) => (
             <div key={category}>
@@ -254,7 +261,10 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
 
-      <Accordion title="Production & Style">
+      <Accordion 
+        title="Production & Style"
+        infoText="Define the overall sound and arrangement. Use these tags to describe the rhythm, mixing techniques, and general vibe of the track."
+      >
         <div className="pt-4 space-y-6">
           {Object.entries(PRODUCTION_TECHNIQUES_CATEGORIZED).map(([category, techniques]) => (
             <div key={category}>
@@ -274,7 +284,10 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
       
-      <Accordion title="Sound Design & VSTs">
+      <Accordion 
+        title="Sound Design & VSTs"
+        infoText="For advanced users. Reference specific VSTs or sound design techniques to guide the AI towards a highly specific electronic or modern sound."
+      >
         <div className="pt-4 space-y-6">
           {Object.entries(KEY_VSTS_CATEGORIZED).map(([category, vsts]) => (
             <div key={category}>
@@ -335,10 +348,17 @@ export const Controls: React.FC<ControlsProps> = ({
                   </div>
               </div>
               
-              <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading || !topic.trim()} variant="secondary" fullWidth>
-                <Icon name="regenerate" />
-                {isPromptLoading ? 'Working...' : 'Generate Style Suggestions'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading || !topic.trim()} variant="secondary" className="flex-grow">
+                  <Icon name="regenerate" />
+                  {isPromptLoading ? 'Working...' : 'Generate Style Suggestions'}
+                </Button>
+                {previousSunoPromptTags !== null && (
+                  <Button onClick={onUndoStyleSuggestion} variant="secondary" className="flex-shrink-0 !p-2.5" title="Undo suggestion">
+                      <Icon name="undo" className="w-5 h-5" />
+                  </Button>
+                )}
+              </div>
               
               <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
                 {isPromptLoading && sunoPromptTags.length === 0 ? (

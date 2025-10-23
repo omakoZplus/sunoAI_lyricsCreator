@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
 
@@ -258,7 +257,8 @@ export const generateSunoPrompt = async (
     **INSTRUMENTAL PROMPT:**
     - The user wants an instrumental track.
     - Your prompt MUST NOT contain any descriptors for vocals (e.g., "male vocals", "female singer", "choir", "rapping").
-    - Focus exclusively on genre, instrumentation, mood, tempo, and production quality.`
+    - Focus exclusively on genre, instrumentation, mood, tempo, and production quality.
+    - **Even if the inspirational artists are known for their vocals, you must ONLY describe their instrumental style.**`
       : `
     **VOCAL PROMPT:**
     - **Vocal Style:** Describe the singer's voice and delivery. This is crucial. If the user provides a description, use it as the primary guide. If it's not specified, infer a suitable voice that fits the genre and mood (e.g., for 'Pop' and 'Happy', you might suggest 'bright, clean female pop vocal').`
@@ -342,7 +342,7 @@ export const findSynonyms = async (word: string): Promise<string[]> => {
   `;
   try {
     const response = await ai.models.generateContent({
-      model: 'gemiservices/geminiService.tsni-2.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -376,4 +376,29 @@ export const rephraseLine = async (line: string): Promise<string> => {
     console.error("Error rephrasing line:", error);
     throw new Error("Failed to rephrase line.");
   }
+};
+
+export const generateSpeech = async (text: string): Promise<string> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text: `Say with standard pacing: ${text}` }] }],
+            config: {
+                responseModalities: [Modality.AUDIO],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: 'Kore' },
+                    },
+                },
+            },
+        });
+        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!base64Audio) {
+            throw new Error("No audio data received from API.");
+        }
+        return base64Audio;
+    } catch (error) {
+        console.error("Error generating speech with Gemini API:", error);
+        throw new Error("Failed to generate speech. Please try again.");
+    }
 };
