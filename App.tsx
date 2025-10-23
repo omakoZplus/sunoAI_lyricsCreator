@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Controls } from './components/Controls';
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   
   const [bgStyle, setBgStyle] = useState({});
   const [isPulsing, setIsPulsing] = useState(false);
+  const [ariaLiveStatus, setAriaLiveStatus] = useState('');
 
   const SAVED_STATE_KEY = 'sunoLyricsCreatorState_v2';
 
@@ -82,6 +84,21 @@ const App: React.FC = () => {
     });
     setIsPulsing(mood === 'Energetic');
   }, [mood]);
+
+  // Effect for ARIA live region status updates
+  useEffect(() => {
+    let status = '';
+    if (isLoading) {
+      status = isInstrumental ? 'Generating instrumental track, please wait.' : 'Generating lyrics, please wait.';
+    } else if (isContinuing) {
+      status = 'Continuing song, please wait.';
+    } else if (isPromptLoading) {
+      status = 'Generating style suggestions, please wait.';
+    } else if (isSurprisingMe) {
+      status = 'Generating a surprise topic, please wait.';
+    }
+    setAriaLiveStatus(status);
+  }, [isLoading, isContinuing, isPromptLoading, isSurprisingMe, isInstrumental]);
 
   const handleInstrumentalChange = useCallback((enabled: boolean) => {
     setIsInstrumental(enabled);
@@ -404,6 +421,9 @@ const App: React.FC = () => {
       className={`min-h-screen text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 transition-colors duration-[2000ms] ${isPulsing ? 'pulse-bg' : ''}`}
       style={bgStyle}
     >
+      <span role="status" aria-live="polite" className="sr-only">
+        {ariaLiveStatus}
+      </span>
       <div className="w-full max-w-6xl mx-auto">
         <Header />
         <main className="mt-8 grid grid-cols-1 md:grid-cols-12 gap-8">

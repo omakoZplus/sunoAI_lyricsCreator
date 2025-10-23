@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SongSection, SectionAnalysis } from '../types';
 import { analyzeSection } from '../services/geminiService';
@@ -56,9 +57,10 @@ export const LyricEditor: React.FC<LyricEditorProps> = ({ section, onContentChan
     const map: Record<string, string> = {};
     if (!analysis) return map;
 
-    const rhymeKeys = Array.from(new Set(analysis.lines.map(l => l.rhymeKey).filter(Boolean)));
+    const rhymeKeys = Array.from(new Set(analysis.lines.map(l => l.rhymeKey).filter((key): key is string => !!key)));
     rhymeKeys.forEach((key, index) => {
-      map[key!] = RHYME_COLORS[index % RHYME_COLORS.length];
+      // FIX: The type guard in the line above ensures `key` is a string, which can be used as an index type. Without it, `key` could be `string | null`, causing a type error.
+      map[key] = RHYME_COLORS[index % RHYME_COLORS.length];
     });
     return map;
   }, [analysis]);

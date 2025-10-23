@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { GENRES, MOODS, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES_CATEGORIZED, KEY_VSTS_CATEGORIZED } from '../constants';
 import { Select } from './Select';
@@ -264,7 +265,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
 
-      <Accordion title="Musical Style">
+      <Accordion title="Musical Style" defaultOpen>
         <div className="space-y-6 pt-4">
           <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} options={LANGUAGES} disabled={isInstrumental} />
           <Select label="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} options={GENRES} />

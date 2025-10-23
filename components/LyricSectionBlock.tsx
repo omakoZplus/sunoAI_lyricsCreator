@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SongSection } from '../types';
 import { Icon } from './Icon';
@@ -42,6 +43,12 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
   onDragEnter,
   onDragEnd
 }) => {
+  const ariaStatus = section.isLoading
+    ? `Regenerating ${section.type}...`
+    : isSpeechLoading
+    ? `Loading audio for ${section.type}...`
+    : '';
+
   return (
     <div
       className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 flex gap-3 group relative"
@@ -69,6 +76,12 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = ({
                     </button>
                 </div>
             </div>
+
+            {ariaStatus && (
+              <span className="sr-only" role="status" aria-live="polite">
+                {ariaStatus}
+              </span>
+            )}
 
             {section.isLoading ? (
                 <SkeletonLoader lines={4} className="py-1" />
