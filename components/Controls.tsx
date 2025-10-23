@@ -102,7 +102,8 @@ export const Controls: React.FC<ControlsProps> = ({
   const [excludeCharCountExceeded, setExcludeCharCountExceeded] = useState(false);
 
   const allTagSuggestions = useMemo(() => {
-    return Array.from(new Set([...KEY_INSTRUMENTS, ...PRODUCTION_TECHNIQUES, ...KEY_VSTS]));
+    const allInstruments = Object.values(KEY_INSTRUMENTS).flat();
+    return Array.from(new Set([...allInstruments, ...PRODUCTION_TECHNIQUES, ...KEY_VSTS]));
   }, []);
 
   const sunoPromptText = sunoPromptTags.join(', ');
@@ -252,7 +253,26 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       </Accordion>
 
-      <TagSection title="Key Instruments" tags={KEY_INSTRUMENTS} sunoPromptTags={sunoPromptTags} onToggleTag={handleToggleTag} />
+      <Accordion title="Key Instruments">
+        <div className="pt-4 space-y-6">
+          {Object.entries(KEY_INSTRUMENTS).map(([category, instruments]) => (
+            <div key={category}>
+              <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {instruments.map(instrument => (
+                  <ToggleChip
+                    key={instrument}
+                    text={instrument}
+                    isActive={sunoPromptTags.includes(instrument)}
+                    onClick={() => handleToggleTag(instrument)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Accordion>
+
       <TagSection title="Production & Style" tags={PRODUCTION_TECHNIQUES} sunoPromptTags={sunoPromptTags} onToggleTag={handleToggleTag} />
       <TagSection title="Sound Design & VSTs" tags={KEY_VSTS} sunoPromptTags={sunoPromptTags} onToggleTag={handleToggleTag} />
 

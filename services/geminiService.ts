@@ -88,6 +88,12 @@ export async function* generateLyricsStream(
     *   **Energy Level:** \`[Energy: Low/Medium/High/Intense]\`. Use this to guide the song's dynamics.
     *   **Production/FX:** \`[FX: Reverb Heavy]\`, \`[FX: Drum Machine]\`, \`[FX: Filter Sweep]\`.
 
+    **Conciseness & Length (VERY IMPORTANT):**
+    *   **TARGET LENGTH:** Aim for a total output (title + lyrics + tags) under 3000 characters. This is crucial for compatibility with music generation platforms.
+    *   **STRUCTURE:** Create a standard, concise song structure (e.g., Verse-Chorus-Verse-Chorus-Bridge-Chorus-Outro). Avoid excessive repetition or overly complex structures.
+    *   **LYRICS:** Keep verses to 4-8 lines and choruses to 4-6 lines. Be impactful with your words.
+    *   **METATAGS:** Be strategic. Place tags where they create the most impact. Group tags at the start of a section where appropriate, rather than placing a tag on every single line.
+
     **TASK:**
     - **Topic:** "${topic}"
     - **Language:** ${language}
@@ -98,7 +104,7 @@ export async function* generateLyricsStream(
     - **Detailed Style Tags:** ${styleTags.length > 0 ? styleTags.join(', ') : 'None provided. Generate appropriate tags based on genre and mood.'}
     - Your generated metatags like [Instrument: ...] and [FX: ...] MUST be heavily influenced by these Detailed Style Tags.
     - **STRUCTURE TO CREATE:**
-    -   Create a complete and logical song structure.
+    -   Create a complete and logical song structure, respecting the conciseness rules.
     -   ${artists ? `**ARTIST INFLUENCE ON STRUCTURE:** The user has listed "${artists}" as inspiration. Analyze their typical song structures (e.g., complex arrangements like Queen, or simple verse-chorus like Ramones) and let this analysis guide the structure you create.` : 'Create a standard song structure (e.g., Intro, Verse, Chorus, Bridge, Outro).'}
     -   Write complete lyrics/instrumental cues and embed detailed descriptive metatags throughout.
     
@@ -153,7 +159,7 @@ export async function* regenerateSectionStream(
     ${lyricsContext || '(This is the first section of the song.)'}
 
     **YOUR TASK:**
-    Write the content for the **[${sectionToRegenerate}]** section now.
+    Write concise content (typically 4-8 lines) for the **[${sectionToRegenerate}]** section now.
 
     Begin Output (content for [${sectionToRegenerate}] only):
     `;
@@ -209,7 +215,7 @@ export async function* continueSongStream(
     ---
 
     **YOUR TASK:**
-    Write the very next section of the song.
+    Write the very next section of the song. It should be concise and advance the song's structure logically.
 
     Begin Output (new section only):
     `;

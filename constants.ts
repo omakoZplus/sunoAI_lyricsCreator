@@ -70,9 +70,36 @@ export const SONG_STRUCTURES = [
     { name: 'Custom Full Song', template: '[Intro]\n\n[Verse 1]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Verse 2]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Bridge]\n\n[Chorus]\n\n[Outro]' }
 ];
 
-export const KEY_INSTRUMENTS = [
-    '808 Drum Machine', '909 Drum Machine', 'Accordion', 'Acoustic Guitar', 'Bagpipes', 'Banjo', 'Bass', 'Bass Guitar', 'Cajon', 'Cello', 'Choir Synthesizer', 'Clarinet', 'Congas', 'Djembe', 'Drums', 'Electric Guitar', 'Electric Piano', 'Flute', 'Glockenspiel', 'Hammond B3 Organ', 'Handpan', 'Harmonica', 'Harp', 'Keyboard', 'Koto', 'Mandolin', 'Marimba', 'Modular Synth', 'Oboe', 'Organ', 'Oud', 'Percussion', 'Piano', 'Rhodes Piano', 'Saxophone', 'Shakuhachi', 'Shamisen', 'Sitar', 'Strings', 'Symphonic Guitar', 'Synthesizer', 'Tabla', 'Taiko Drums', 'Theremin', 'Trombone', 'Trumpet', 'Turntables', 'Ukulele', 'Violin', 'Vocoder', 'Wurlitzer', 'Xylophone'
-].sort();
+export const KEY_INSTRUMENTS: Record<string, string[]> = {
+    'Keyboards & Synths': [
+        'Accordion', 'Choir Synthesizer', 'Electric Piano', 'Hammond B3 Organ',
+        'Keyboard', 'Modular Synth', 'Organ', 'Piano', 'Rhodes Piano', 'Synthesizer',
+        'Theremin', 'Vocoder', 'Wurlitzer'
+    ].sort(),
+    'Guitars & Bass': [
+        'Acoustic Guitar', 'Bass', 'Bass Guitar', 'Electric Guitar', 'Symphonic Guitar'
+    ].sort(),
+    'Strings': [
+        'Cello', 'Harp', 'Strings', 'Violin'
+    ].sort(),
+    'Brass': [
+        'Horns', 'Trombone', 'Trumpet'
+    ].sort(),
+    'Woodwinds': [
+        'Bagpipes', 'Clarinet', 'Flute', 'Harmonica', 'Oboe', 'Saxophone', 'Shakuhachi'
+    ].sort(),
+    'Percussion': [
+        '808 Drum Machine', '909 Drum Machine', 'Cajon', 'Congas', 'Djembe', 'Drums',
+        'Glockenspiel', 'Handpan', 'Kalimba', 'Marimba', 'Percussion', 'Tabla',
+        'Taiko Drums', 'Xylophone'
+    ].sort(),
+    'Folk & World': [
+        'Banjo', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar', 'Ukulele'
+    ].sort(),
+    'Electronic & DJ': [
+        'Turntables'
+    ].sort()
+};
 
 export const PRODUCTION_TECHNIQUES = [
     '80s Gated Reverb', 'Arpeggiated', 'Atmospheric', 'Catchy Melodies', 'City Pop Groove', 'Crisp Mix', 'Dissonant Chords', 'Driving Rhythm', 'Dynamic Builds', 'Epic Orchestral Mix', 'Ethereal Pads', 'Gritty Distortion', 'Heavy Reverb', 'Intricate Arrangements', 'Intricate Drum Fills', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic', 'Lush Harmonies', 'Melodic Bassline', 'Minimalist Repetition', 'Modern Pop Sheen', 'Orchestral Stabs', 'Polyrhythmic', 'Punchy Drums', 'Shibuya-kei Influence', 'Sidechain Compression', 'Slick Bassline', 'Slow Tempo', 'Soaring Anime Vocals', 'Technical Guitar Riff', 'Twangy Guitar', 'Upbeat Tempo', 'Vintage Tape Saturation', 'Warm Analog Synths'
