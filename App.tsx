@@ -123,7 +123,6 @@ const App: React.FC = () => {
   }, [artists, isInstrumental, handleInstrumentalChange]);
 
   const handleClearSession = useCallback(() => {
-    // Removed window.confirm as it might be blocked in some environments
     localStorage.removeItem(SAVED_STATE_KEY);
     setTopic('');
     setTitle('');
@@ -168,7 +167,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleGenerateLyrics = useCallback(async () => {
+  const handleGenerate = useCallback(async () => {
     if (!topic.trim()) {
       setError('Please enter a topic for your song.');
       return;
@@ -177,10 +176,33 @@ const App: React.FC = () => {
     setError(null);
     setLyrics([]);
     setTitle('');
-    setPreviousSunoPromptTags(null);
     
     try {
-      const stream = generateLyricsStream(topic, title, genre, mood, language, voiceStyle, isInstrumental, '', artists, sunoPromptTags, bpm);
+      let finalStyleTags = sunoPromptTags;
+
+      // "Quick Generate" logic: if no style tags are manually set, generate them first.
+      if (finalStyleTags.length === 0) {
+        setAriaLiveStatus('Generating style suggestions...');
+        const generatedTags = await generateSunoPrompt(topic, genre, mood, artists, voiceStyle, isInstrumental, bpm, []);
+        
+        const combinedTags = Array.from(new Set(generatedTags));
+        let currentPrompt = '';
+        const tagsWithinLimit: string[] = [];
+        for (const tag of combinedTags) {
+            const tempPrompt = currentPrompt ? `${currentPrompt}, ${tag}` : tag;
+            if (tempPrompt.length <= 1000) {
+                currentPrompt = tempPrompt;
+                tagsWithinLimit.push(tag);
+            } else {
+                break;
+            }
+        }
+        setSunoPromptTags(tagsWithinLimit);
+        finalStyleTags = tagsWithinLimit;
+      }
+
+      setAriaLiveStatus(isInstrumental ? 'Generating instrumental track...' : 'Generating lyrics...');
+      const stream = generateLyricsStream(topic, title, genre, mood, language, voiceStyle, isInstrumental, '', artists, finalStyleTags, bpm);
       
       let buffer = '';
       let titleSet = false;
@@ -377,7 +399,6 @@ const App: React.FC = () => {
   
   const handleApplyTemplate = useCallback((template: string) => {
     if (!template) return;
-    // Removed window.confirm as it might be blocked in some environments
     const newSections = parseLyrics(template);
     setLyrics(newSections);
   }, []);
@@ -392,7 +413,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleClearLyricsAndTitle = useCallback(() => {
-    // Removed window.confirm as it might be blocked in some environments
     setTitle('');
     setLyrics([]);
   }, []);
@@ -426,7 +446,7 @@ const App: React.FC = () => {
               setVoiceStyle={setVoiceStyle}
               bpm={bpm}
               setBpm={setBpm}
-              onGenerate={handleGenerateLyrics}
+              onGenerate={handleGenerate}
               isLoading={isLoading}
               artists={artists}
               setArtists={setArtists}
