@@ -123,24 +123,23 @@ const App: React.FC = () => {
   }, [artists, isInstrumental, handleInstrumentalChange]);
 
   const handleClearSession = useCallback(() => {
-    if (window.confirm('Are you sure you want to start a new song? This will clear all current input and lyrics.')) {
-      localStorage.removeItem(SAVED_STATE_KEY);
-      setTopic('');
-      setTitle('');
-      setIsInstrumental(false);
-      setGenre(GENRES[0]);
-      setMood(MOODS[0]);
-      setLanguage('English');
-      setVoiceStyle('');
-      setBpm('');
-      setLyrics([]);
-      setError(null);
-      setArtists('');
-      setSunoPromptTags([]);
-      setSunoExcludeTags(defaultExcludeTags);
-      setPromptError(null);
-      setPreviousSunoPromptTags(null);
-    }
+    // Removed window.confirm as it might be blocked in some environments
+    localStorage.removeItem(SAVED_STATE_KEY);
+    setTopic('');
+    setTitle('');
+    setIsInstrumental(false);
+    setGenre(GENRES[0]);
+    setMood(MOODS[0]);
+    setLanguage('English');
+    setVoiceStyle('');
+    setBpm('');
+    setLyrics([]);
+    setError(null);
+    setArtists('');
+    setSunoPromptTags([]);
+    setSunoExcludeTags(defaultExcludeTags);
+    setPromptError(null);
+    setPreviousSunoPromptTags(null);
   }, []);
 
   const handleSurpriseMe = useCallback(async () => {
@@ -378,18 +377,10 @@ const App: React.FC = () => {
   
   const handleApplyTemplate = useCallback((template: string) => {
     if (!template) return;
-    const apply = () => {
-        const newSections = parseLyrics(template);
-        setLyrics(newSections);
-    };
-    if (lyrics.length > 0) {
-        if (window.confirm('Applying a template will replace your current lyrics. Are you sure?')) {
-            apply();
-        }
-    } else {
-        apply();
-    }
-  }, [lyrics]);
+    // Removed window.confirm as it might be blocked in some environments
+    const newSections = parseLyrics(template);
+    setLyrics(newSections);
+  }, []);
 
   const handleReorderSections = useCallback((startIndex: number, endIndex: number) => {
     setLyrics(currentLyrics => {
@@ -401,10 +392,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleClearLyricsAndTitle = useCallback(() => {
-    if (window.confirm('Are you sure you want to clear the title and all lyrics? This cannot be undone.')) {
-      setTitle('');
-      setLyrics([]);
-    }
+    // Removed window.confirm as it might be blocked in some environments
+    setTitle('');
+    setLyrics([]);
   }, []);
 
   return (

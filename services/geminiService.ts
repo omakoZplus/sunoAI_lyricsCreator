@@ -2,13 +2,13 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { SectionAnalysis } from "../types";
 
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable is not set");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const getAiClient = () => {
+    const API_KEY = process.env.API_KEY;
+    if (!API_KEY) {
+        throw new Error("API_KEY environment variable is not set. Please configure it in your environment.");
+    }
+    return new GoogleGenAI({ apiKey: API_KEY });
+};
 
 const handleGeminiError = (error: unknown, context: string): Error => {
   console.error(`Error in Gemini API call (${context}):`, error);
@@ -34,6 +34,7 @@ const handleGeminiError = (error: unknown, context: string): Error => {
 
 const generateContentStreamWithRetry = async (prompt: string) => {
   try {
+    const ai = getAiClient();
     return await ai.models.generateContentStream({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -48,6 +49,7 @@ const generateContentStreamWithRetry = async (prompt: string) => {
 
 const generateContentWithRetry = async (prompt: string) => {
     try {
+      const ai = getAiClient();
       return await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
@@ -98,6 +100,7 @@ export async function* generateLyricsStream(
 
           [Instrument: Synth]
           A line of lyrics...
+    6. **Content for Every Section:** For every structural tag you generate (e.g., \`[Intro]\`, \`[Theme A]\`), you MUST write at least 2-4 lines of descriptive metatags or lyrics immediately following it. DO NOT generate empty sections.
 
     **TRACK TYPE:**
     ${isInstrumental
@@ -274,7 +277,9 @@ export const generateSunoPrompt = async (
     You are a prompt engineering expert specializing in the Suno AI music generator (v5). Your task is to create a list of highly-detailed, effective "Style of Music" descriptors based on user-provided details. The goal is to generate a rich, complete set of tags that will guide the AI to create a specific sound.
 
     **CRITICAL INSTRUCTIONS:**
-    1.  **ABSOLUTELY NO ARTIST NAMES:** You must never mention any artist names in the final output. Analyze the style of the inspirational artists and translate it into descriptive terms (e.g., instead of "like Queen", describe it as "epic 70s stadium rock", "multi-tracked vocal harmonies", "flamboyant piano", "soaring guitar solos").
+    1.  **ABSOLUTELY NO COPYRIGHTED NAMES:** You must not mention specific artist names, band names, or video game titles in the final output tags. This is critical to avoid copyright issues. Instead, analyze the requested style and translate it into descriptive, generic terms.
+        - **Artist Example:** Instead of "like Daft Punk", generate tags like "funky filtered disco house", "vocoder vocals", "robotic voice effects", "punchy French house bassline".
+        - **Game Example:** Instead of "like the soundtrack from Chrono Trigger", generate tags like "nostalgic 16-bit JRPG soundtrack", "chiptune melodies with orchestral elements", "SNES-style reverb".
     2.  **DETAILED & SPECIFIC:** Each tag in the list should be a descriptive phrase. Go beyond simple genre tags.
     3.  **COVER MULTIPLE FACETS:** Your tags should touch on several of the following aspects:
         *   Genre/Subgenre: Be specific (e.g., "Dream Pop", "Melodic Death Metal", "UK Garage").
@@ -314,6 +319,7 @@ export const generateSunoPrompt = async (
   `;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -368,6 +374,7 @@ export const findRhymes = async (word: string): Promise<string[]> => {
     Word: "${word}"
   `;
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -393,6 +400,7 @@ export const findSynonyms = async (word: string): Promise<string[]> => {
     Word: "${word}"
   `;
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -418,6 +426,7 @@ export const getThematicIdeas = async (word: string): Promise<string[]> => {
       Word: "${word}"
     `;
     try {
+      const ai = getAiClient();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -443,6 +452,7 @@ export const getThematicIdeas = async (word: string): Promise<string[]> => {
       Original line: "${line}"
     `;
     try {
+      const ai = getAiClient();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -498,6 +508,7 @@ export const analyzeSection = async (sectionText: string): Promise<SectionAnalys
     `;
   
     try {
+      const ai = getAiClient();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -532,6 +543,7 @@ export const analyzeSection = async (sectionText: string): Promise<SectionAnalys
 
 export const generateSpeech = async (text: string): Promise<string> => {
     try {
+        const ai = getAiClient();
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
             contents: [{ parts: [{ text: `Say with standard pacing: ${text}` }] }],

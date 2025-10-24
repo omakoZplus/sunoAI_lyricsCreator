@@ -196,18 +196,45 @@ export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
 
 export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
     'Synthesizers': [
-        'Arp Sequence', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive', 'Massive X', 'Moog Subsequent',
-        'NES Synth', 'Nexus 4', 'Omnisphere', 'Serum', 'SID Chip Emulation', 'Spire', 'Supersaw Lead', 'Sylenth1',
-        'Vocaloid Synth', 'Yamaha DX7-style FM Pad'
+        '3xOsc',
+        'Arp Sequence',
+        'Diva',
+        'FM Synthesis Pad',
+        'Magical 8bit Plug',
+        'Massive',
+        'Massive X',
+        'Moog Subsequent',
+        'NES Synth',
+        'Nexus 4',
+        'Omnisphere',
+        'SID Chip Emulation',
+        'Spire',
+        'Supersaw Lead',
+        'Sylenth1',
+        'Vocaloid Synth',
+        'Xfer Serum',
+        'Yamaha DX7-style FM Pad'
     ].sort(),
     'Bass': [
         '808 Sub Bass', 'Wobbly Bass'
     ].sort(),
     'Sample Libraries': [
-        'Arturia Piano', 'EastWest Hollywood Strings', 'Kontakt Noire Piano', 'Spitfire Albion One'
+        'Arturia Piano',
+        'EastWest Hollywood Strings',
+        'Kontakt',
+        'Kontakt Noire Piano',
+        'Shreddage X',
+        'Spitfire Albion One',
+        'Spitfire Audio LABS Soft Piano'
     ].sort(),
     'Samples & Soundfonts': [
-      'Earthbound Soundfont', 'Orchestral Hit Stab', 'Retro Game Samples', 'SNES Soundfont'
+      'Classic JRPG Soundfont',
+      'GBA-style Soundfont',
+      'Japanese Indie Game Soundfont',
+      'Orchestral Hit Stab',
+      'Retro Game Samples',
+      'SGM Soundfont',
+      'SNES Soundfont'
     ].sort(),
     'Effects & Processing': [
         'Bitcrushed', 'CamelCrusher', 'Glitch Effects', 'Granular Texture', 'OTT Compression', 'Professional Mastering',
