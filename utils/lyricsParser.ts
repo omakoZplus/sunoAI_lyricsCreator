@@ -1,3 +1,4 @@
+
 import { SongSection } from '../types';
 
 const SECTION_TAG_REGEX = /^( *)\[(.*?)\]( *)/;
@@ -8,6 +9,17 @@ export interface Metatag {
     startIndex: number;
     endIndex: number;
 }
+
+const stripDescriptiveMetatags = (content: string): string => {
+    const lines = content.split('\n');
+    // A descriptive metatag line is one that is ONLY a metatag containing a colon.
+    // e.g., "[Instrument: Piano]" is removed, but "[Chorus]" or lyrical lines are kept.
+    const filteredLines = lines.filter(line => {
+        const trimmed = line.trim();
+        return !(trimmed.startsWith('[') && trimmed.endsWith(']') && trimmed.includes(':'));
+    });
+    return filteredLines.join('\n');
+};
 
 export const extractMetatags = (text: string): Metatag[] => {
     const tags: Metatag[] = [];
@@ -101,6 +113,13 @@ export const parseLyrics = (rawText: string): SongSection[] => {
 
 export const stringifyLyrics = (sections: SongSection[]): string => {
     return sections.map(section => `[${section.type}]\n${section.content.trim()}`).join('\n\n');
+};
+
+export const stringifyLyricsOnly = (sections: SongSection[]): string => {
+    return sections.map(section => {
+        const lyricsContent = stripDescriptiveMetatags(section.content);
+        return `[${section.type}]\n${lyricsContent.trim()}`;
+    }).join('\n\n');
 };
 
 export const getNextSectionName = (type: string, existingSections: SongSection[]): string => {

@@ -128,6 +128,33 @@ export const SONG_STRUCTURES = [
     { name: 'Custom Full Song', template: '[Intro]\n\n[Verse 1]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Verse 2]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Bridge]\n\n[Chorus]\n\n[Outro]' }
 ];
 
+export const STYLE_TEMPLATES = [
+  {
+    name: '80s Power Ballad',
+    tags: ['80s rock ballad', 'powerful male vocals', 'emotional piano melody', 'epic guitar solo', 'gated reverb on drums', 'lush synthesizers', 'slow tempo', 'dynamic builds', 'anthem chorus']
+  },
+  {
+    name: 'Modern Lo-fi Beat',
+    tags: ['lo-fi hip hop', 'chillhop', 'jazzy chords', 'boom bap drum pattern', 'vinyl crackle', 'tape hiss', 'relaxed tempo', 'mellow rhodes piano', 'nostalgic mood', 'instrumental']
+  },
+  {
+    name: 'Epic Movie Trailer Score',
+    tags: ['cinematic orchestral music', 'epic score', 'hybrid orchestra', 'dramatic choir', 'braaam sound effects', 'huge percussion hits', 'building tension', 'triumphant theme', 'sound design elements', 'instrumental']
+  },
+  {
+    name: 'Synthwave Racer',
+    tags: ['synthwave', 'retrowave', '80s aesthetic', 'driving beat', 'arpeggiated synth bass', 'neon grid visuals', 'fast tempo', 'sawtooth synth leads', 'vintage drum machine']
+  },
+  {
+    name: 'Acoustic Folk',
+    tags: ['singer-songwriter', 'acoustic folk', 'intimate male vocals', 'fingerpicked acoustic guitar', 'gentle harmonica', 'warm and organic production', 'heartfelt storytelling']
+  },
+  {
+    name: 'JRPG Battle Theme',
+    tags: ['JRPG battle music', '16-bit soundfont', 'chiptune elements', 'fast-paced orchestral rock', 'electric guitar riffs', 'upbeat and intense', 'memorable melody', 'SNES-style reverb', 'video game OST']
+  }
+];
+
 export const KEY_INSTRUMENTS: Record<string, string[]> = {
     'Keyboards & Synths': [
         '8-bit Synth', 'Accordion', 'Acid Bassline', 'Choir Synthesizer', 'Chiptune Synth', 'Electric Piano',

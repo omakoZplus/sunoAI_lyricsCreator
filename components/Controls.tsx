@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { GENRES, MOODS, LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES_CATEGORIZED, KEY_VSTS_CATEGORIZED } from '../constants';
 import { Select } from './Select';
@@ -9,6 +11,11 @@ import { Accordion } from './Accordion';
 import { ToggleChip } from './ToggleChip';
 import { TagInput } from './TagInput';
 import { CharCountCircle } from './CharCountCircle';
+import { BpmTapper } from './BpmTapper';
+import { StyleBlender } from './StyleBlender';
+import { StyleTemplates } from './StyleTemplates';
+import { StyleDeconstructor } from './StyleDeconstructor';
+import { improveTopic } from '../services/geminiService';
 
 interface ControlsProps {
   topic: string;
@@ -97,6 +104,8 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
   const [excludeCopyText, setExcludeCopyText] = useState('Copy');
   const [excludeCharCountExceeded, setExcludeCharCountExceeded] = useState(false);
   const [activeStudioTab, setActiveStudioTab] = useState<TagCategory>('instruments');
+  const [draggedTag, setDraggedTag] = useState<string | null>(null);
+  const [isImproving, setIsImproving] = useState(false);
 
   const allTagSuggestions = useMemo(() => {
     const allInstruments = Object.values(KEY_INSTRUMENTS).flat();
@@ -183,6 +192,77 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
     }
   };
 
+  const handleBlendedTags = (tags: string[]) => {
+    const newTags = Array.from(new Set([...sunoPromptTags, ...tags]));
+    
+    let currentPrompt = '';
+    const finalTags: string[] = [];
+    for (const tag of newTags) {
+        const tempPrompt = currentPrompt ? `${currentPrompt}, ${tag}` : tag;
+        if (tempPrompt.length <= 1000) {
+            currentPrompt = tempPrompt;
+            finalTags.push(tag);
+        } else {
+            setCharCountExceeded(true);
+            break;
+        }
+    }
+    setSunoPromptTags(finalTags);
+  };
+
+  const handleApplyStyleTemplate = (tags: string[]) => {
+    const prospectivePrompt = tags.join(', ');
+    if (prospectivePrompt.length > 1000) {
+        alert('This style template exceeds the character limit.');
+        setCharCountExceeded(true);
+    } else {
+        setSunoPromptTags(tags);
+    }
+  };
+
+  const handleDeconstructStyle = (tags: string[]) => {
+    handleBlendedTags(tags); // Reuse the same logic as blending to append unique tags
+  };
+
+  const handleDragStart = (tag: string) => {
+    setDraggedTag(tag);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, overTag: string) => {
+    e.preventDefault();
+    if (draggedTag && draggedTag !== overTag) {
+        const draggedIndex = sunoPromptTags.indexOf(draggedTag);
+        const overIndex = sunoPromptTags.indexOf(overTag);
+
+        if (draggedIndex > -1 && overIndex > -1) {
+            const items = Array.from(sunoPromptTags);
+            // Remove the dragged item from its original position
+            items.splice(draggedIndex, 1);
+            // Insert it at the new position
+            items.splice(overIndex, 0, draggedTag);
+            setSunoPromptTags(items);
+        }
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTag(null);
+  };
+
+  const handleImproveTopic = async () => {
+    if (!topic.trim()) return;
+    setIsImproving(true);
+    try {
+        const improved = await improveTopic(topic);
+        setTopic(improved);
+    } catch (err) {
+        console.error("Failed to improve topic:", err);
+        // In a real app, you might show a toast notification here
+    } finally {
+        setIsImproving(false);
+    }
+  };
+
   const renderStudioContent = () => {
       let categories: Record<string, string[]> = {};
       if (activeStudioTab === 'instruments') categories = KEY_INSTRUMENTS;
@@ -215,17 +295,23 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
     <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-8">
       
       {/* === SONG DNA === */}
-      <div className="space-y-6">
+      <div id="song-dna-section" className="space-y-6">
         <h2 className="text-xl font-bold text-gray-200">Song DNA</h2>
         <div>
           <div className="flex justify-between items-center mb-2">
             <label htmlFor="topic" className="block text-sm font-medium text-gray-300">
               Song Topic
             </label>
-            <Button onClick={onSurpriseMe} disabled={isSurprisingMe} variant="secondary" className="!py-1 !px-2.5 text-xs">
-              <Icon name="regenerate" className="w-4 h-4" />
-              {isSurprisingMe ? 'Thinking...' : 'Surprise Me'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleImproveTopic} disabled={isImproving || !topic.trim()} variant="secondary" className="!py-1 !px-2.5 text-xs">
+                <Icon name="regenerate" className="w-4 h-4" />
+                {isImproving ? 'Improving...' : 'Improve Topic'}
+              </Button>
+              <Button onClick={onSurpriseMe} disabled={isSurprisingMe} variant="secondary" className="!py-1 !px-2.5 text-xs">
+                <Icon name="regenerate" className="w-4 h-4" />
+                {isSurprisingMe ? 'Thinking...' : 'Surprise Me'}
+              </Button>
+            </div>
           </div>
           <textarea
             id="topic"
@@ -259,7 +345,7 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
       </div>
 
       {/* === STYLE OF MUSIC === */}
-      <div className="space-y-4">
+      <div id="style-of-music-section" className="space-y-4">
         <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-200">Style of Music</h2>
             <div className="flex items-center gap-3">
@@ -298,7 +384,16 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
               <>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {sunoPromptTags.map(tag => (
-                    <Chip key={tag} text={tag} onRemove={() => handleRemoveTag(tag)} color="purple" />
+                    <div
+                      key={tag}
+                      draggable
+                      onDragStart={() => handleDragStart(tag)}
+                      onDragOver={(e) => handleDragOver(e, tag)}
+                      onDragEnd={handleDragEnd}
+                      className={`cursor-move transition-opacity duration-200 ${draggedTag === tag ? 'opacity-30' : 'opacity-100'}`}
+                    >
+                      <Chip text={tag} onRemove={() => handleRemoveTag(tag)} color="purple" />
+                    </div>
                   ))}
                   {sunoPromptTags.length === 0 && <p className="text-gray-500 text-sm p-1">Generate or add style tags...</p>}
                 </div>
@@ -321,7 +416,7 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
 
       {/* === GENERATE ACTIONS === */}
       <div className="pt-8 border-t border-gray-700 space-y-4">
-        <Button onClick={onGenerate} disabled={isLoading || !topic.trim()} fullWidth>
+        <Button id="generate-button" onClick={onGenerate} disabled={isLoading || !topic.trim()} fullWidth>
             {isLoading ? (isInstrumental ? 'Generating Track...' : 'Generating Lyrics...') : (isInstrumental ? 'Generate Instrumental Track' : 'Generate Lyrics')}
         </Button>
          <div className="text-center">
@@ -368,8 +463,13 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
                         </button>
                     ))}
                 </div>
-                <div>
+                <div className="mb-4">
                     {renderStudioContent()}
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-700 space-y-4">
+                    <StyleTemplates onApplyTemplate={handleApplyStyleTemplate} />
+                    <StyleBlender onTagsGenerated={handleBlendedTags} />
+                    <StyleDeconstructor onDeconstruct={handleDeconstructStyle} />
                 </div>
             </Accordion>
             
@@ -409,18 +509,21 @@ export const Controls: React.FC<ControlsProps> = React.memo(({
               <h3 className="text-lg font-semibold text-gray-300">Track Settings</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} options={LANGUAGES} disabled={isInstrumental} />
-                <div>
-                  <label htmlFor="bpm" className="block text-sm font-medium text-gray-300 mb-2">
-                      BPM (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    id="bpm"
-                    value={bpm}
-                    onChange={(e) => setBpm(e.target.value)}
-                    placeholder="e.g., 120"
-                    className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-                  />
+                <div className="grid grid-cols-2 gap-4 items-end">
+                    <div>
+                      <label htmlFor="bpm" className="block text-sm font-medium text-gray-300 mb-2">
+                          BPM
+                      </label>
+                      <input
+                        type="number"
+                        id="bpm"
+                        value={bpm}
+                        onChange={(e) => setBpm(e.target.value)}
+                        placeholder="e.g., 120"
+                        className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+                      />
+                    </div>
+                    <BpmTapper onBpmChange={setBpm} />
                 </div>
               </div>
               <div>

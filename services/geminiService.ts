@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { SectionAnalysis } from "../types";
 
@@ -100,17 +101,18 @@ export async function* generateLyricsStream(
 
           [Instrument: Synth]
           A line of lyrics...
-    6. **Content for Every Section:** For every structural tag you generate (e.g., \`[Intro]\`, \`[Theme A]\`), you MUST write at least 2-4 lines of descriptive metatags or lyrics immediately following it. DO NOT generate empty sections.
+    6. **Content for Every Section:** For every structural tag you generate (e.g., \`[Intro]\`, \`[Theme A]\`), you MUST write at least 2-4 lines of descriptive metatags or lyrical/instrumental cues immediately following it. DO NOT generate empty sections.
 
     **TRACK TYPE:**
     ${isInstrumental
       ? `
       - This is an INSTRUMENTAL track.
+      - **ABSOLUTELY NO LYRICS.** Your entire output, apart from structural tags, must be descriptive metatags describing instrumentation, mood, and musical progression. DO NOT write any lines that are meant to be sung.
       - **IMPORTANT GOAL:** The output should be a structure for a concise instrumental piece, typically resulting in a 2-3 minute long song. Avoid overly long, complex, or repetitive song structures that mimic vocal pop songs.
       - **STRUCTURE GUIDANCE:** Instead of a verse-chorus structure, think in terms of musical movements: [Intro], [Theme A], [Development/Section B], [Solo], [Theme A Reprise], [Outro]. The structure should tell a musical story.
       - Focus heavily on describing the instrumental performance, dynamics, and emotional arc.
       - Use tags like [Guitar Solo], [Instrumental Break], [Synth Lead Melody], [Orchestral Swell].
-      - OMIT any vocal parts, vocal style tags, or lyrical lines for singing. The output must be a structure of instrumental cues ONLY.`
+      - OMIT any vocal parts, vocal style tags, or lines of text that are not enclosed in square brackets as metatags. The output must be a structure of instrumental cues ONLY.`
       : `
       - This is a VOCAL track.
       - Write lyrics for a vocal performance.
@@ -293,6 +295,7 @@ export const generateSunoPrompt = async (
       ? `
     **INSTRUMENTAL PROMPT:**
     - The user wants an instrumental track.
+    - The tag "instrumental" MUST be included in the output array.
     - Your prompt MUST NOT contain any descriptors for vocals (e.g., "male vocals", "female singer", "choir", "rapping").
     - Focus exclusively on genre, instrumentation, mood, tempo, and production quality.
     - **Even if the inspirational artists are known for their vocals, you must ONLY describe their instrumental style.**`
@@ -342,6 +345,48 @@ export const generateSunoPrompt = async (
   }
 };
 
+export const blendStyles = async (style1: string, style2: string): Promise<string[]> => {
+    const prompt = `
+    You are a prompt engineering expert specializing in the Suno AI music generator (v5). Your task is to act as a musical fusion artist, blending two distinct styles into a cohesive and creative set of "Style of Music" descriptors.
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **ABSOLUTELY NO COPYRIGHTED NAMES:** Do not mention specific artist names, band names, or video game titles in the final output tags. Analyze the requested styles and translate them into descriptive, generic terms.
+        - **Example:** If blending "Daft Punk" and "Fleetwood Mac", you might generate tags like "funky disco house with soft rock influences", "vocoder vocals over acoustic guitar", "punchy French house bassline with lush harmonies".
+    2.  **FUSION, NOT A LIST:** Do not just list tags for each style. Find the intersection and create new, blended descriptors.
+    3.  **DETAILED & SPECIFIC:** Each tag in the list should be a descriptive phrase covering genre, instrumentation, tempo, and production.
+    4.  **FORMAT:** The output must be a JSON array of strings.
+
+    **STYLES TO BLEND:**
+    - **Style 1:** "${style1}"
+    - **Style 2:** "${style2}"
+
+    Based on these two styles, generate a JSON array of "Style of Music" tags that represents a creative fusion of both.
+  `;
+
+  try {
+    const ai = getAiClient();
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.STRING,
+              description: 'A descriptive tag representing the blended music style.'
+            }
+          }
+        }
+    });
+
+    return JSON.parse(response.text.trim());
+
+  } catch (error) {
+    throw handleGeminiError(error, "Style blending");
+  }
+};
+
 export const generateRandomTopic = async (genre: string, mood: string): Promise<string> => {
     const prompt = `
     You are a creative muse for songwriters.
@@ -361,6 +406,31 @@ export const generateRandomTopic = async (genre: string, mood: string): Promise<
     *   **Your Output:** The last working android in a neon-drenched, rain-slicked metropolis searches for a memory chip containing the consciousness of its creator, all while being hunted by corporate agents who see it as obsolete technology. It's a story of love, loss, and identity under the perpetual twilight of a dystopian future.
     
     Now, generate a topic for the request above.
+    `;
+    const response = await generateContentWithRetry(prompt);
+    return response.text.trim();
+};
+
+export const improveTopic = async (currentTopic: string): Promise<string> => {
+    const prompt = `
+    You are a creative muse for songwriters, an expert at transforming simple ideas into evocative and detailed song concepts.
+    Your task is to take the user's raw song topic, correct any spelling or grammar mistakes, and expand it into a more descriptive and inspiring paragraph.
+    The goal is to provide a richer foundation for songwriting.
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **Correct & Enhance:** Fix any errors in the original text.
+    2.  **Add Detail:** Elaborate on the core idea. Add sensory details, potential characters, a setting, or a conflict.
+    3.  **Maintain Intent:** Do not change the fundamental meaning or mood of the user's original topic.
+    4.  **Output Format:** Return ONLY the improved topic text as a single paragraph. Do not include any titles, headings, or extra explanations like "Here is the improved topic:".
+
+    **User's Original Topic:**
+    "${currentTopic}"
+
+    **High-Quality Example:**
+    *   **User Input:** "sad song abut a breakup"
+    *   **Your Output:** A melancholic reflection on a recent breakup, focusing on the small, everyday objects left behind by a former lover—a forgotten coffee mug, a worn-out t-shirt, a book with a dog-eared page. Each item triggers a vivid, bittersweet memory, making the emptiness of the apartment feel even more profound.
+
+    Now, improve the user's topic provided above.
     `;
     const response = await generateContentWithRetry(prompt);
     return response.text.trim();

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
 import { WordSmithPopup } from './WordSmithPopup';
@@ -7,14 +7,16 @@ import { SuggestionsModal } from './SuggestionsModal';
 import { SkeletonLoader } from './SkeletonLoader';
 import { findRhymes, findSynonyms, generateImageryForLine, getThematicIdeas, generateSpeech } from '../services/geminiService';
 import { SongSection } from '../types';
-import { stringifyLyrics, stripMetatags } from '../utils/lyricsParser';
+import { stringifyLyrics, stripMetatags, stringifyLyricsOnly } from '../utils/lyricsParser';
 import { decode, decodeAudioData } from '../utils/audioUtils';
 import { LyricSectionBlock } from './LyricSectionBlock';
 import { StructureControls } from './StructureControls';
+import { SongStructureVisualizer } from './SongStructureVisualizer';
 
 interface LyricsDisplayProps {
   title: string;
   lyrics: SongSection[];
+  sunoPromptTags: string[];
   setLyrics: (lyrics: SongSection[]) => void;
   isLoading: boolean;
   error: string | null;
@@ -47,9 +49,12 @@ type ModalState = {
   isLoading: boolean;
 };
 
+type CopyStatus = 'suno' | 'lyricsOnly' | 'download' | null;
+
 export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   title,
   lyrics,
+  sunoPromptTags,
   setLyrics,
   isLoading,
   error,
@@ -64,7 +69,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   showMetatagEditor,
   onClearLyricsAndTitle,
 }) => {
-  const [copyText, setCopyText] = useState('Copy');
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>(null);
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selection: '', sectionId: '', selectionStart: 0, selectionEnd: 0 });
   const [modal, setModal] = useState<ModalState>({ visible: false, title: '', suggestions: [], isLoading: false });
   const displayRef = useRef<HTMLDivElement>(null);
@@ -75,11 +80,39 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   const [isSpeechLoading, setIsSpeechLoading] = useState<string | null>(null); // holds sectionId
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const handleCopy = () => {
-    const fullText = stringifyLyrics(lyrics);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const triggerCopyAnimation = (type: CopyStatus) => {
+    setCopyStatus(type);
+    setTimeout(() => setCopyStatus(null), 2000);
+  };
+
+  const handleSunoCopy = () => {
+    const stylePrompt = sunoPromptTags.length > 0 ? `[Style of Music: ${sunoPromptTags.join(', ')}]` : '';
+    const lyricsText = stringifyLyrics(lyrics);
+    const fullText = `${stylePrompt}\n\n${title ? `${title}\n` : ''}${lyricsText}`.trim();
     navigator.clipboard.writeText(fullText);
-    setCopyText('Copied!');
-    setTimeout(() => setCopyText('Copy'), 2000);
+    triggerCopyAnimation('suno');
+  };
+
+  const handleLyricsOnlyCopy = () => {
+    const lyricsOnlyText = stringifyLyricsOnly(lyrics);
+    const fullText = `${title ? `${title}\n` : ''}${lyricsOnlyText}`.trim();
+    navigator.clipboard.writeText(fullText);
+    triggerCopyAnimation('lyricsOnly');
   };
 
   const handleDownload = () => {
@@ -94,6 +127,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    triggerCopyAnimation('download');
   };
   
   const handlePlaySection = useCallback(async (sectionId: string) => {
@@ -242,12 +276,15 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
 
   return (
     <>
-      <div ref={displayRef} className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 shadow-lg h-full flex flex-col" style={{ minHeight: '600px' }}>
+      <div id="lyrics-display-section" ref={displayRef} className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 shadow-lg h-full flex flex-col" style={{ minHeight: '600px' }}>
         <div 
             className="flex-grow p-6 flex flex-col relative overflow-hidden"
             onDragEnd={handleDragEnd}
         >
           {title && <h2 className="text-2xl font-bold mb-4 text-purple-300 flex-shrink-0">{title}</h2>}
+          
+          <SongStructureVisualizer sections={lyrics} />
+
           <div 
             className="flex-grow space-y-4 overflow-y-auto pr-2 -mr-2"
             onMouseLeave={() => setPopup(p => ({ ...p, visible: false }))}
@@ -299,14 +336,38 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
                 <Icon name="plus" />
                 {isContinuing ? 'Continuing...' : 'Continue'}
               </Button>
-              <Button onClick={handleCopy} variant="secondary">
-                <Icon name="copy" />
-                {copyText}
-              </Button>
-              <Button onClick={handleDownload} variant="secondary">
-                <Icon name="download" />
-                Download
-              </Button>
+              <div className="relative" ref={exportMenuRef}>
+                <Button onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} variant="secondary">
+                  <Icon name="download" />
+                  <span>Export</span>
+                  <Icon name="chevron" className={`w-4 h-4 transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
+                </Button>
+                {isExportMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10 py-1">
+                    <button
+                      onClick={() => { handleSunoCopy(); setIsExportMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
+                    >
+                      <Icon name="copy" className="w-4 h-4" />
+                      <span>{copyStatus === 'suno' ? 'Copied!' : 'Copy for Suno'}</span>
+                    </button>
+                    <button
+                      onClick={() => { handleLyricsOnlyCopy(); setIsExportMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
+                    >
+                      <Icon name="copy" className="w-4 h-4" />
+                      <span>{copyStatus === 'lyricsOnly' ? 'Copied!' : 'Copy Lyrics Only'}</span>
+                    </button>
+                    <button
+                      onClick={() => { handleDownload(); setIsExportMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
+                    >
+                      <Icon name="download" className="w-4 h-4" />
+                      <span>{copyStatus === 'download' ? 'Downloaded!' : 'Download as .txt'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

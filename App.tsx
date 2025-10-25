@@ -7,6 +7,7 @@ import { generateLyricsStream, regenerateSectionStream, generateSunoPrompt, cont
 import { GENRES, MOODS, MOOD_COLORS } from './constants';
 import { SongSection } from './types';
 import { parseLyrics, stringifyLyrics, getNextSectionName } from './utils/lyricsParser';
+import { Tour } from './components/Tour';
 
 const defaultExcludeTags = [
   'bad quality', 'out of tune', 'noisy', 'low fidelity', 'amateur', 'abrupt ending', 'static', 'distortion', 'mumbling', 'gibberish vocals', 'excessive reverb', 'clashing elements', 'generic', 'uninspired', 'robotic', 'artificial sound', 'metallic', 'harsh', 'shrill', 'muddy mix', 'undefined', 'chaotic', 'disjointed', 'monotone', 'repetitive', 'boring', 'flat', 'lifeless', 'thin', 'hollow', 'overproduced', 'under-produced'
@@ -41,9 +42,16 @@ const App: React.FC = () => {
   const [ariaLiveStatus, setAriaLiveStatus] = useState('');
 
   const SAVED_STATE_KEY = 'sunoLyricsCreatorState_v2';
+  const TOUR_COMPLETED_KEY = 'sunoLyricsCreatorTourCompleted_v1';
+  const [isTourActive, setIsTourActive] = useState(false);
 
   // Load state from localStorage on initial render
   useEffect(() => {
+    const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY);
+    if (!tourCompleted) {
+        setIsTourActive(true);
+    }
+
     const savedStateRaw = localStorage.getItem(SAVED_STATE_KEY);
     if (savedStateRaw) {
       try {
@@ -66,6 +74,11 @@ const App: React.FC = () => {
         localStorage.removeItem(SAVED_STATE_KEY);
       }
     }
+  }, []);
+
+  const handleTourComplete = useCallback(() => {
+    localStorage.setItem(TOUR_COMPLETED_KEY, 'true');
+    setIsTourActive(false);
   }, []);
 
   // Save state to localStorage whenever it changes
@@ -104,8 +117,14 @@ const App: React.FC = () => {
     setIsInstrumental(enabled);
     if (enabled) {
       setLanguage('No Language');
+      setSunoPromptTags(currentTags => {
+        // Prevent duplicates and ensure it's at the start.
+        const newTags = currentTags.filter(t => t.toLowerCase() !== 'instrumental');
+        return ['instrumental', ...newTags];
+      });
     } else {
       setLanguage(currentLanguage => currentLanguage === 'No Language' ? 'English' : currentLanguage);
+      setSunoPromptTags(currentTags => currentTags.filter(tag => tag.toLowerCase() !== 'instrumental'));
     }
   }, []);
 
@@ -219,27 +238,20 @@ const App: React.FC = () => {
 
         if (titleSet) {
           const parsedSections = parseLyrics(buffer);
-          setLyrics(currentLyrics => {
-            if (parsedSections.length === 0) return currentLyrics;
-            
-            let newLyrics = [...currentLyrics];
-            
-            if (parsedSections.length > newLyrics.length) {
-              if (newLyrics.length > 0) {
-                newLyrics[newLyrics.length - 1].isLoading = false;
-              }
-              const sectionsToAdd = parsedSections.slice(newLyrics.length);
-              newLyrics.push(...sectionsToAdd.map(s => ({ ...s, isLoading: true, content: '' })));
-            }
-
-            for (let i = 0; i < parsedSections.length; i++) {
-              if (newLyrics[i]) {
-                newLyrics[i].content = parsedSections[i].content;
-              }
-            }
-            
-            return newLyrics;
-          });
+          if (parsedSections.length > 0) {
+            setLyrics(currentLyrics => {
+              // Reconcile new sections with existing ones to preserve IDs and state
+              const reconciledLyrics = parsedSections.map((parsed, index) => {
+                const existing = currentLyrics[index];
+                return {
+                  ...parsed, // get type and content from new parse
+                  id: existing ? existing.id : parsed.id, // preserve old ID if possible for React keys
+                  isLoading: index === parsedSections.length - 1, // only the last section is actively loading
+                };
+              });
+              return reconciledLyrics;
+            });
+          }
         }
       }
 
@@ -422,6 +434,7 @@ const App: React.FC = () => {
       className={`min-h-screen text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 transition-colors duration-[2000ms] ${isPulsing ? 'pulse-bg' : ''}`}
       style={bgStyle}
     >
+      {isTourActive && <Tour onComplete={handleTourComplete} />}
       <span role="status" aria-live="polite" className="sr-only">
         {ariaLiveStatus}
       </span>
@@ -471,6 +484,7 @@ const App: React.FC = () => {
             <LyricsDisplay
               title={title}
               lyrics={lyrics}
+              sunoPromptTags={sunoPromptTags}
               setLyrics={setLyrics}
               isLoading={isLoading}
               error={error}
