@@ -1,7 +1,8 @@
 
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { SectionAnalysis } from "../types";
+import { SectionAnalysis, SongStarterKit } from "../types";
+import { GENRES, MOODS } from "../constants";
 
 const getAiClient = () => {
     const API_KEY = process.env.API_KEY;
@@ -65,6 +66,8 @@ export async function* generateLyricsStream(
   userInputTitle: string, 
   genre: string, 
   mood: string, 
+  lyricalStyle: string,
+  countryVibe: string,
   language: string, 
   voiceStyle: string, 
   isInstrumental: boolean,
@@ -134,9 +137,11 @@ export async function* generateLyricsStream(
 
     **TASK:**
     - **Topic:** "${topic}"
+    ${lyricalStyle !== 'None' ? `- **Lyrical Style:** Your writing must embody a "${lyricalStyle}" style. For "Storytelling", create a clear narrative. For "Abstract & Poetic", use figurative language and imagery. For "Simple & Direct", use clear, straightforward language. For "Conversational", write as if one person is speaking to another.` : ''}
     - **Language:** ${language}
     ${genre !== 'None' ? `- **Genre:** "${genre}"` : `- **Genre:** Not specified. You can infer an appropriate genre.`}
     ${mood !== 'None' ? `- **Mood:** "${mood}"` : `- **Mood:** Not specified. You can infer an appropriate mood.`}
+    ${countryVibe !== 'None' ? `- **Country of Influence:** Incorporate musical elements and themes from "${countryVibe}".` : ''}
     ${bpm ? `- **BPM:** "${bpm}"` : ''}
     - **Inspirational Artists (for structure & style):** ${artists || 'None'}
     - **Detailed Style Tags:** ${styleTags.length > 0 ? styleTags.join(', ') : 'None provided. Generate appropriate tags based on genre and mood.'}
@@ -162,6 +167,8 @@ export async function* regenerateSectionStream(
   title: string,
   genre: string, 
   mood: string, 
+  lyricalStyle: string,
+  countryVibe: string,
   language: string, 
   voiceStyle: string, 
   isInstrumental: boolean,
@@ -184,9 +191,11 @@ export async function* regenerateSectionStream(
     **OVERALL SONG CONTEXT:**
     - **Topic:** "${topic}"
     - **Title:** "${title}"
+    ${lyricalStyle !== 'None' ? `- **Lyrical Style:** The writing must maintain a "${lyricalStyle}" style.` : ''}
     - **Language:** ${language}
     ${genre !== 'None' ? `- **Genre:** "${genre}"` : ''}
     ${mood !== 'None' ? `- **Mood:** "${mood}"` : ''}
+    ${countryVibe !== 'None' ? `- **Country of Influence:** Maintain musical elements and themes from "${countryVibe}".` : ''}
     ${bpm ? `- **BPM:** "${bpm}"` : ''}
     ${isInstrumental ? `- **Track Type:** Instrumental` : `- **Track Type:** Vocal`}
     ${!isInstrumental && voiceStyle ? `- **Vocal Identity:** "${voiceStyle}"` : ''}
@@ -214,6 +223,8 @@ export async function* continueSongStream(
   title: string,
   genre: string, 
   mood: string, 
+  lyricalStyle: string,
+  countryVibe: string,
   language: string, 
   voiceStyle: string, 
   isInstrumental: boolean,
@@ -238,9 +249,11 @@ export async function* continueSongStream(
     **OVERALL SONG CONTEXT:**
     - **Topic:** "${topic}"
     - **Title:** "${title}"
+    ${lyricalStyle !== 'None' ? `- **Lyrical Style:** The new section's writing must continue the established "${lyricalStyle}" style.` : ''}
     - **Language:** ${language}
     ${genre !== 'None' ? `- **Genre:** "${genre}"` : ''}
     ${mood !== 'None' ? `- **Mood:** "${mood}"` : ''}
+    ${countryVibe !== 'None' ? `- **Country of Influence:** Maintain musical elements and themes from "${countryVibe}".` : ''}
     ${bpm ? `- **BPM:** "${bpm}"` : ''}
     ${isInstrumental ? `- **Track Type:** Instrumental` : `- **Track Type:** Vocal`}
     ${!isInstrumental && voiceStyle ? `- **Vocal Identity:** "${voiceStyle}"` : ''}
@@ -387,28 +400,68 @@ export const blendStyles = async (style1: string, style2: string): Promise<strin
   }
 };
 
-export const generateRandomTopic = async (genre: string, mood: string): Promise<string> => {
+export const generateSongStarterKit = async (): Promise<SongStarterKit> => {
+    const availableGenres = GENRES.filter(g => g !== 'None').join(', ');
+    const availableMoods = MOODS.filter(m => m !== 'None').join(', ');
+
     const prompt = `
     You are a creative muse for songwriters.
-    Your task is to generate a single, creative, and detailed song topic based on a given genre and mood.
-    The topic should be a short paragraph that tells a miniature story or presents a compelling scenario, perfect for sparking lyrical ideas.
-    
-    **CRITICAL INSTRUCTIONS:**
-    1.  **BE DETAILED:** Don't just give a title. Describe a scene, a feeling, a conflict, or a character.
-    2.  **MATCH THE VIBE:** The topic must perfectly align with the provided genre and mood.
-    3.  **OUTPUT FORMAT:** Return ONLY the topic text. Do not include any titles, headings, or extra explanations.
-    
-    **Genre:** "${genre}"
-    **Mood:** "${mood}"
+    Your task is to generate a complete and inspiring "Song Starter Kit".
+    This kit includes a creative song topic, a fitting title for that topic, a suitable genre, a matching mood, and a list of 5-7 descriptive style tags that would work well in the Suno AI music generator.
 
-    **High-Quality Example:**
-    *   **Input:** Genre: "Synthwave", Mood: "Melancholic"
-    *   **Your Output:** The last working android in a neon-drenched, rain-slicked metropolis searches for a memory chip containing the consciousness of its creator, all while being hunted by corporate agents who see it as obsolete technology. It's a story of love, loss, and identity under the perpetual twilight of a dystopian future.
-    
-    Now, generate a topic for the request above.
+    **CRITICAL INSTRUCTIONS:**
+    1.  **JSON OUTPUT:** Your entire response MUST be a single, valid JSON object that adheres to the provided schema.
+    2.  **CREATIVE & COHESIVE:** All elements (topic, title, genre, mood, tags) must be thematically linked and create a cohesive creative vision.
+    3.  **TOPIC DETAIL:** The topic should be a short, evocative paragraph (2-3 sentences) describing a scene, character, or story.
+    4.  **GENRE & MOOD SELECTION:** You MUST select one genre from the "Available Genres" list and one mood from the "Available Moods" list.
+    5.  **STYLE TAGS:** The style tags should be descriptive and specific, going beyond simple genre/mood. Think about instrumentation, production, and vibe. Do not use copyrighted artist names.
+
+    **Available Genres:**
+    ${availableGenres}
+
+    **Available Moods:**
+    ${availableMoods}
+
+    **EXAMPLE OUTPUT:**
+    {
+      "topic": "The last working android in a neon-drenched, rain-slicked metropolis searches for a memory chip containing the consciousness of its creator. It's a story of love, loss, and identity under the perpetual twilight of a dystopian future.",
+      "title": "Chrome Heart, Silicon Soul",
+      "genre": "Synthwave",
+      "mood": "Melancholic",
+      "styleTags": ["retrowave", "80s aesthetic", "driving synth bass", "gated reverb drums", "neon-soaked atmosphere", "vocoder accents", "nostalgic and cinematic"]
+    }
+
+    Now, generate a new, unique Song Starter Kit.
     `;
-    const response = await generateContentWithRetry(prompt);
-    return response.text.trim();
+    
+    try {
+        const ai = getAiClient();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        topic: { type: Type.STRING, description: "A detailed, creative song topic." },
+                        title: { type: Type.STRING, description: "A fitting song title for the topic." },
+                        genre: { type: Type.STRING, description: "A genre from the provided list." },
+                        mood: { type: Type.STRING, description: "A mood from the provided list." },
+                        styleTags: {
+                            type: Type.ARRAY,
+                            description: "An array of 5-7 descriptive style tags.",
+                            items: { type: Type.STRING }
+                        }
+                    },
+                    required: ["topic", "title", "genre", "mood", "styleTags"]
+                }
+            }
+        });
+        return JSON.parse(response.text.trim());
+    } catch (error) {
+        throw handleGeminiError(error, "song starter kit generation");
+    }
 };
 
 export const improveTopic = async (currentTopic: string): Promise<string> => {
@@ -609,6 +662,56 @@ export const analyzeSection = async (sectionText: string): Promise<SectionAnalys
       throw handleGeminiError(error, "section analysis");
     }
   };
+
+export const analyzeAndSuggestMetatags = async (
+    sectionContent: string,
+    songTopic: string,
+    songGenre: string,
+    songMood: string
+): Promise<string[]> => {
+    const prompt = `
+        You are a master music producer and an expert on the Suno AI music generator.
+        Your task is to analyze a song section (lyrics and existing metatags) and suggest 3-5 new, highly specific, and creative metatags that would enhance it.
+
+        **CRITICAL INSTRUCTIONS:**
+        1.  **Analyze Context:** Consider the song's overall topic, genre, and mood, as well as the specific lyrics and existing metatags for the provided section.
+        2.  **Be Creative & Specific:** Suggest tags that add nuance. Instead of "[Energy: High]", suggest "[Energy: Building to a powerful crescendo]". Instead of "[Instrument: Guitar]", suggest "[Instrument: Gritty, overdriven guitar with heavy palm-muting]".
+        3.  **Consider Flow:** Your suggestions should make sense in the context of musical progression. If it's a verse, maybe suggest a new instrument entering subtly. If it's a chorus, suggest something to make it bigger.
+        4.  **Format:** The output MUST be a JSON array of strings. Each string should be the full content of a metatag, without the brackets. For example: "Vocal Style: Ethereal and breathy", not "[Vocal Style: Ethereal and breathy]".
+
+        **SONG CONTEXT:**
+        - **Topic:** "${songTopic}"
+        - **Genre:** "${songGenre}"
+        - **Mood:** "${songMood}"
+
+        **SECTION TO ANALYZE:**
+        ---
+        ${sectionContent}
+        ---
+
+        Based on this, provide a JSON array of 3-5 metatag suggestions.
+    `;
+    try {
+        const ai = getAiClient();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.STRING,
+                        description: 'The content of a metatag, e.g., "Instrument: Cello"'
+                    }
+                }
+            }
+        });
+        return JSON.parse(response.text.trim());
+    } catch (error) {
+        throw handleGeminiError(error, "metatag suggestion");
+    }
+};
 
 
 export const generateSpeech = async (text: string): Promise<string> => {

@@ -1,20 +1,26 @@
 
+
 import React, { useState } from 'react';
 import { SongSection } from '../types';
 import { extractMetatags, Metatag } from '../utils/lyricsParser';
 import { Icon } from './Icon';
+import { analyzeAndSuggestMetatags } from '../services/geminiService';
 
 interface MetatagEditorProps {
     section: SongSection;
     onUpdateContent: (newContent: string) => void;
+    topic: string;
+    genre: string;
+    mood: string;
 }
 
-export const MetatagEditor: React.FC<MetatagEditorProps> = ({ section, onUpdateContent }) => {
+export const MetatagEditor: React.FC<MetatagEditorProps> = ({ section, onUpdateContent, topic, genre, mood }) => {
     const [editingTag, setEditingTag] = useState<Metatag | null>(null);
     const [editingValue, setEditingValue] = useState('');
     const [newTagValue, setNewTagValue] = useState('');
-
-    const metatags = extractMetatags(section.content);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
     const handleEditClick = (tag: Metatag) => {
         setEditingTag(tag);
@@ -59,6 +65,29 @@ export const MetatagEditor: React.FC<MetatagEditorProps> = ({ section, onUpdateC
         setNewTagValue('');
     };
 
+    const handleGetSuggestions = async () => {
+        setIsSuggesting(true);
+        setSuggestionError(null);
+        setSuggestions([]);
+        try {
+            const results = await analyzeAndSuggestMetatags(section.content, topic, genre, mood);
+            setSuggestions(results);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Could not fetch suggestions.";
+            setSuggestionError(errorMessage);
+        } finally {
+            setIsSuggesting(false);
+        }
+    };
+
+    const handleAddSuggestion = (suggestion: string) => {
+        const newFullTag = `[${suggestion}]\n`;
+        onUpdateContent(newFullTag + section.content);
+        setSuggestions(current => current.filter(s => s !== suggestion));
+    };
+
+
+    const metatags = extractMetatags(section.content);
 
     return (
         <div className="mt-4 pt-3 border-t border-gray-700/50">
@@ -103,7 +132,34 @@ export const MetatagEditor: React.FC<MetatagEditorProps> = ({ section, onUpdateC
                 <button onClick={handleAddTag} className="p-1.5 bg-gray-700/50 text-gray-200 rounded-md hover:bg-gray-600/70 transition-colors">
                     <Icon name="plus" className="w-4 h-4" />
                 </button>
+                 <button
+                    onClick={handleGetSuggestions}
+                    disabled={isSuggesting}
+                    className="p-1.5 bg-gray-700/50 text-gray-200 rounded-md hover:bg-purple-600/70 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                    title="Get AI Suggestions"
+                >
+                    <Icon name="regenerate" className={`w-4 h-4 ${isSuggesting ? 'animate-spin' : ''}`} />
+                </button>
             </div>
+            {(isSuggesting || suggestionError || suggestions.length > 0) && (
+                <div className="mt-3">
+                    {isSuggesting && <p className="text-sm text-gray-400">Thinking...</p>}
+                    {suggestionError && <p className="text-sm text-red-400">{suggestionError}</p>}
+                    {suggestions.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {suggestions.map(sugg => (
+                                <button
+                                    key={sugg}
+                                    onClick={() => handleAddSuggestion(sugg)}
+                                    className="px-2.5 py-1 bg-gray-700/50 text-gray-200 text-xs font-semibold rounded-md hover:bg-purple-600/70 transition-colors"
+                                >
+                                    + {sugg}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

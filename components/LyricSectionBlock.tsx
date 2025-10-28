@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { SongSection } from '../types';
 import { Icon } from './Icon';
@@ -8,7 +9,6 @@ import { LyricEditor } from './LyricEditor';
 
 interface LyricSectionBlockProps {
   section: SongSection;
-  index: number;
   onUpdateContent: (sectionId: string, content: string) => void;
   onRegenerate: (sectionId: string) => void;
   onDelete: (sectionId: string) => void;
@@ -23,13 +23,13 @@ interface LyricSectionBlockProps {
   isSpeechLoading: boolean;
   isSpeaking: boolean;
   showMetatagEditor: boolean;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  topic: string;
+  genre: string;
+  mood: string;
 }
 
 export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
   section,
-  index,
   onUpdateContent,
   onRegenerate,
   onDelete,
@@ -38,8 +38,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
   isSpeechLoading,
   isSpeaking,
   showMetatagEditor,
-  onDragStart,
-  onDragEnter
+  topic,
+  genre,
+  mood,
 }) => {
   const ariaStatus = section.isLoading
     ? `Regenerating ${section.type}...`
@@ -49,16 +50,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
 
   return (
     <div
+      id={`section-block-${section.id}`}
       className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 flex gap-3 group relative"
-      draggable
-      data-index={index}
-      onDragStart={onDragStart}
-      onDragEnter={onDragEnter}
-      onDragOver={(e) => e.preventDefault()}
     >
-        <div className="text-gray-500 cursor-grab pt-1">
-            <Icon name="drag" className="w-5 h-5" />
-        </div>
         <div className="flex-grow">
             <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold text-gray-300">{section.type}</h3>
@@ -95,6 +89,9 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
               <MetatagEditor 
                 section={section}
                 onUpdateContent={(content) => onUpdateContent(section.id, content)}
+                topic={topic}
+                genre={genre}
+                mood={mood}
               />
             )}
         </div>

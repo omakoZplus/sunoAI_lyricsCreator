@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -12,24 +13,29 @@ import { decode, decodeAudioData } from '../utils/audioUtils';
 import { LyricSectionBlock } from './LyricSectionBlock';
 import { StructureControls } from './StructureControls';
 import { SongStructureVisualizer } from './SongStructureVisualizer';
+import { Metronome } from './Metronome';
 
 interface LyricsDisplayProps {
   title: string;
   lyrics: SongSection[];
   sunoPromptTags: string[];
+  bpm: string;
   setLyrics: (lyrics: SongSection[]) => void;
   isLoading: boolean;
   error: string | null;
   onUpdateSectionContent: (sectionId: string, content: string) => void;
   onRegenerateSection: (sectionId: string) => void;
   onDeleteSection: (sectionId: string) => void;
-  onAddSection: (type: string) => void;
+  onAddSection: (type: string, atIndex?: number) => void;
   onApplyTemplate: (template: string) => void;
   onReorderSections: (startIndex: number, endIndex: number) => void;
   onContinueSong: () => void;
   isContinuing: boolean;
   showMetatagEditor: boolean;
   onClearLyricsAndTitle: () => void;
+  topic: string;
+  genre: string;
+  mood: string;
 }
 
 type PopupState = {
@@ -55,6 +61,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   title,
   lyrics,
   sunoPromptTags,
+  bpm,
   setLyrics,
   isLoading,
   error,
@@ -68,13 +75,14 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
   isContinuing,
   showMetatagEditor,
   onClearLyricsAndTitle,
+  topic,
+  genre,
+  mood,
 }) => {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>(null);
   const [popup, setPopup] = useState<PopupState>({ visible: false, x: 0, y: 0, selection: '', sectionId: '', selectionStart: 0, selectionEnd: 0 });
   const [modal, setModal] = useState<ModalState>({ visible: false, title: '', suggestions: [], isLoading: false });
   const displayRef = useRef<HTMLDivElement>(null);
-  const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
   
   const [nowPlaying, setNowPlaying] = useState<{ source: AudioBufferSourceNode, sectionId: string } | null>(null);
   const [isSpeechLoading, setIsSpeechLoading] = useState<string | null>(null); // holds sectionId
@@ -249,28 +257,13 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
       setModal({ visible: true, title: `Error finding ${action}`, suggestions: [errorMessage], isLoading: false });
     }
   }, [popup]);
-  
-  const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-      const index = e.currentTarget.dataset.index;
-      if (index) {
-          dragItem.current = parseInt(index, 10);
-      }
-  }, []);
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-      const index = e.currentTarget.dataset.index;
-      if (index) {
-          dragOverItem.current = parseInt(index, 10);
-      }
-  }, []);
-  
-  const handleDragEnd = useCallback(() => {
-    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
-      onReorderSections(dragItem.current, dragOverItem.current);
+  const handleScrollToSection = useCallback((sectionId: string) => {
+    const sectionElement = document.getElementById(`section-block-${sectionId}`);
+    if (sectionElement) {
+        sectionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    dragItem.current = null;
-    dragOverItem.current = null;
-  }, [onReorderSections]);
+  }, []);
   
   const hasLyrics = lyrics.length > 0;
 
@@ -279,11 +272,22 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
       <div id="lyrics-display-section" ref={displayRef} className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 shadow-lg h-full flex flex-col" style={{ minHeight: '600px' }}>
         <div 
             className="flex-grow p-6 flex flex-col relative overflow-hidden"
-            onDragEnd={handleDragEnd}
         >
-          {title && <h2 className="text-2xl font-bold mb-4 text-purple-300 flex-shrink-0">{title}</h2>}
+          <div className="flex justify-between items-start mb-4 flex-shrink-0 gap-4">
+            <div className="flex-grow">
+              {title && <h2 className="text-2xl font-bold text-purple-300">{title}</h2>}
+            </div>
+            <div className="flex-shrink-0 pt-1">
+              <Metronome bpm={bpm} />
+            </div>
+          </div>
           
-          <SongStructureVisualizer sections={lyrics} />
+          <SongStructureVisualizer 
+            sections={lyrics} 
+            onReorderSections={onReorderSections}
+            onAddSection={onAddSection}
+            onScrollToSection={handleScrollToSection}
+          />
 
           <div 
             className="flex-grow space-y-4 overflow-y-auto pr-2 -mr-2"
@@ -293,7 +297,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
             
             {isLoading && <SkeletonLoader lines={12} />}
             
-            {lyrics.map((section, index) => (
+            {lyrics.map((section) => (
               <LyricSectionBlock 
                 key={section.id} 
                 section={section}
@@ -305,9 +309,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
                 isSpeechLoading={isSpeechLoading === section.id}
                 isSpeaking={nowPlaying?.sectionId === section.id}
                 showMetatagEditor={showMetatagEditor}
-                index={index}
-                onDragStart={handleDragStart}
-                onDragEnter={handleDragEnter}
+                topic={topic}
+                genre={genre}
+                mood={mood}
               />
             ))}
           </div>
@@ -325,7 +329,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
         </div>
 
         <div className="p-4 bg-gray-900/50 border-t border-gray-700 rounded-b-2xl flex items-center justify-between space-x-3 flex-shrink-0">
-          <StructureControls onAddSection={onAddSection} onApplyTemplate={onApplyTemplate} />
+          <StructureControls onApplyTemplate={onApplyTemplate} />
           {hasLyrics && !isLoading && (
             <div className="flex items-center space-x-3">
               <Button onClick={onClearLyricsAndTitle} variant="secondary" className="!bg-rose-500/20 hover:!bg-rose-500/40 text-rose-200" title="Clear Title & Lyrics">

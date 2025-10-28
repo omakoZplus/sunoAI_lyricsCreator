@@ -14,3 +14,11 @@ export interface AnalyzedLine {
 export interface SectionAnalysis {
   lines: AnalyzedLine[];
 }
+
+export interface SongStarterKit {
+    topic: string;
+    title: string;
+    genre: string;
+    mood: string;
+    styleTags: string[];
+}
