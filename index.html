@@ -40,6 +40,49 @@
         white-space: nowrap;
         border-width: 0;
       }
+      /* Styles for Proactive Lyrical Assistant */
+      .suggestion-underline {
+        text-decoration: underline;
+        text-decoration-style: wavy;
+        text-underline-offset: 3px;
+        cursor: help;
+      }
+      .suggestion-underline-cliche {
+        text-decoration-color: #FBBF24; /* amber-400 */
+      }
+      .suggestion-underline-telling {
+        text-decoration-color: #60A5FA; /* blue-400 */
+      }
+      /* Styles for Interactive Meter & Rhyme Visualization */
+      .rhyme-word {
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border-radius: 3px;
+        padding: 0 2px;
+        margin: 0 -2px;
+      }
+      .rhyme-word-active {
+        box-shadow: 0 0 10px var(--rhyme-glow-color, #fff), 0 0 5px var(--rhyme-glow-color, #fff);
+        background-color: var(--rhyme-bg-color, #ffffff20);
+      }
+      .meter-bar {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        bottom: 4px;
+        width: 4px;
+        border-radius: 2px;
+        transition: background 0.5s ease;
+      }
+      .meter-bar-stable { background-color: #34D399; } /* green-400 */
+      .meter-bar-variable {
+        background-image: linear-gradient(to bottom, #FBBF24 50%, transparent 50%);
+        background-size: 100% 12px;
+      }
+      .meter-bar-unstable {
+        background-image: linear-gradient(to bottom, #F87171 50%, transparent 50%);
+        background-size: 100% 8px;
+      }
     </style>
   <script type="importmap">
 {

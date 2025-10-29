@@ -22,3 +22,9 @@ export interface SongStarterKit {
     mood: string;
     styleTags: string[];
 }
+
+export interface LyricalIssue {
+  phrase: string;
+  type: 'cliche' | 'telling';
+  description: string;
+}

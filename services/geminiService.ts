@@ -1,7 +1,7 @@
 
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { SectionAnalysis, SongStarterKit } from "../types";
+import { SectionAnalysis, SongStarterKit, LyricalIssue } from "../types";
 import { GENRES, MOODS } from "../constants";
 
 const getAiClient = () => {
@@ -736,5 +736,103 @@ export const generateSpeech = async (text: string): Promise<string> => {
         return base64Audio;
     } catch (error) {
         throw handleGeminiError(error, "speech generation");
+    }
+};
+
+export const identifyLyricalIssues = async (sectionText: string): Promise<LyricalIssue[]> => {
+    const prompt = `
+    You are an expert songwriting coach. Analyze the following block of lyrics for common issues like clichés and "telling" instead of "showing".
+
+    **CRITICAL INSTRUCTIONS:**
+    1.  **Analyze the Text:** Read through the lyrics and identify specific phrases that are either clichés or overly direct ("telling").
+    2.  **JSON OUTPUT:** Your response MUST be a single JSON object with a key "issues". The value should be an array of objects.
+    3.  **Object Structure:** Each object in the "issues" array must have three keys:
+        *   \`phrase\`: The exact verbatim phrase from the lyrics that has an issue (string).
+        *   \`type\`: The type of issue. Must be either "cliche" or "telling" (string).
+        *   \`description\`: A very brief (5-10 words) explanation of the issue. For a cliché, it can be "Overused phrase". For "telling", it can be "Direct statement, lacks imagery".
+    4.  **No Issues:** If you find no issues, return an empty "issues" array.
+    5.  **Focus:** Only identify clear-cut cases. Do not be overly critical.
+
+    **EXAMPLE:**
+    *   **Input Text:**
+        I look at the moon, it is a silver coin in the sky.
+        Her heart of gold is clear as day.
+        I was very sad when you left.
+    *   **Your Output (as JSON):**
+        {
+          "issues": [
+            { "phrase": "heart of gold", "type": "cliche", "description": "A common, overused phrase." },
+            { "phrase": "clear as day", "type": "cliche", "description": "A common, overused phrase." },
+            { "phrase": "I was very sad", "type": "telling", "description": "Tells emotion directly, doesn't show it." }
+          ]
+        }
+
+    **LYRICS TO ANALYZE:**
+    ---
+    ${sectionText}
+    ---
+
+    Begin JSON Output:
+    `;
+
+    try {
+        const ai = getAiClient();
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        issues: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    phrase: { type: Type.STRING },
+                                    type: { type: Type.STRING },
+                                    description: { type: Type.STRING }
+                                },
+                                required: ["phrase", "type", "description"]
+                            }
+                        }
+                    },
+                    required: ["issues"]
+                }
+            }
+        });
+        const result = JSON.parse(response.text.trim());
+        return result.issues;
+    } catch (error) {
+        // This is a non-critical enhancement, so we don't throw a fatal error.
+        console.error("Failed to identify lyrical issues:", error);
+        return [];
+    }
+};
+
+export const getAlternativeForCliché = async (cliche: string): Promise<string[]> => {
+    const prompt = `
+      You are an expert lyricist with a mastery of original phrasing.
+      Your task is to take a common cliché and generate several more creative and original alternatives.
+      Provide a JSON array of 3-5 rephrased alternatives that convey a similar meaning but in a fresh way.
+      Original cliché: "${cliche}"
+    `;
+    try {
+      const ai = getAiClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        }
+      });
+      return JSON.parse(response.text.trim());
+    } catch (error) {
+      throw handleGeminiError(error, "generating cliché alternatives");
     }
 };
