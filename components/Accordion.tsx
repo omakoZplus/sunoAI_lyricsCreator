@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 import { InfoToggle } from './InfoToggle';
 
@@ -8,13 +9,29 @@ interface AccordionProps {
   defaultOpen?: boolean;
   infoText?: string;
   headerControls?: React.ReactNode;
+  storageKey?: string;
+  id?: string;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false, infoText, headerControls }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+export const Accordion: React.FC<AccordionProps> = ({ title, children, defaultOpen = false, infoText, headerControls, storageKey, id }) => {
+  const [isOpen, setIsOpen] = useState(() => {
+    if (!storageKey) return defaultOpen;
+    try {
+      const storedValue = localStorage.getItem(storageKey);
+      return storedValue ? JSON.parse(storedValue) : defaultOpen;
+    } catch {
+      return defaultOpen;
+    }
+  });
+
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(isOpen));
+    }
+  }, [isOpen, storageKey]);
 
   return (
-    <div className="border-b border-gray-700 last:border-b-0">
+    <div id={id} className="border-b border-gray-700 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center py-3 text-left text-base font-medium text-gray-200"

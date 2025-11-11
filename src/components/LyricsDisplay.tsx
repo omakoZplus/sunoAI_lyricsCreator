@@ -1,3 +1,5 @@
+
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -281,7 +283,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
           />
 
           <div 
-            className="flex-grow mt-4 space-y-2 overflow-y-auto pr-2 -mr-2"
+            className="flex-grow mt-4 space-y-4 overflow-y-auto pr-2 -mr-2"
             onMouseLeave={() => setPopup(p => ({ ...p, visible: false }))}
           >
             {popup.visible && <WordSmithPopup {...popup} onAction={handleAction} />}
@@ -343,21 +345,21 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
                       onClick={() => { handleSunoCopy(); setIsExportMenuOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
                     >
-                      {copyStatus === 'suno' ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="copy" className="w-4 h-4" />}
+                      <Icon name="copy" className="w-4 h-4" />
                       <span>{copyStatus === 'suno' ? 'Copied!' : 'Copy for Suno'}</span>
                     </button>
                     <button
                       onClick={() => { handleLyricsOnlyCopy(); setIsExportMenuOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
                     >
-                      {copyStatus === 'lyricsOnly' ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="copy" className="w-4 h-4" />}
+                      <Icon name="copy" className="w-4 h-4" />
                       <span>{copyStatus === 'lyricsOnly' ? 'Copied!' : 'Copy Lyrics Only'}</span>
                     </button>
                     <button
                       onClick={() => { handleDownload(); setIsExportMenuOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-purple-600/50 flex items-center gap-3 transition-colors"
                     >
-                      {copyStatus === 'download' ? <Icon name="check" className="w-4 h-4 text-green-400" /> : <Icon name="download" className="w-4 h-4" />}
+                      <Icon name="download" className="w-4 h-4" />
                       <span>{copyStatus === 'download' ? 'Downloaded!' : 'Download as .txt'}</span>
                     </button>
                   </div>
@@ -370,4 +372,4 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = React.memo(({
       <SuggestionsModal {...modal} onClose={() => setModal({ visible: false, title: '', suggestions: [], isLoading: false })} />
     </>
   );
-});
+}));

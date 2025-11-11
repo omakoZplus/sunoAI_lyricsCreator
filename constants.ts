@@ -270,6 +270,7 @@ export const MOODS: string[] = [
     'Edgy',
     'Electric',
     'Elegant',
+    'Emotional',
     'Empowering',
     'Enchanting',
     'Energetic',
@@ -628,120 +629,209 @@ export const STYLE_TEMPLATES = [
     tags: ['80s rock ballad', 'powerful male vocals', 'emotional piano melody', 'epic guitar solo', 'gated reverb on drums', 'lush synthesizers', 'slow tempo', 'dynamic builds', 'anthem chorus']
   },
   {
-    name: 'Modern Lo-fi Beat',
-    tags: ['lo-fi hip hop', 'chillhop', 'jazzy chords', 'boom bap drum pattern', 'vinyl crackle', 'tape hiss', 'relaxed tempo', 'mellow rhodes piano', 'nostalgic mood', 'instrumental']
-  },
-  {
-    name: 'Epic Movie Trailer Score',
-    tags: ['cinematic orchestral music', 'epic score', 'hybrid orchestra', 'dramatic choir', 'braaam sound effects', 'huge percussion hits', 'building tension', 'triumphant theme', 'sound design elements', 'instrumental']
-  },
-  {
-    name: 'Synthwave Racer',
-    tags: ['synthwave', 'retrowave', '80s aesthetic', 'driving beat', 'arpeggiated synth bass', 'neon grid visuals', 'fast tempo', 'sawtooth synth leads', 'vintage drum machine']
+    name: '90s Boom Bap',
+    tags: ['boom bap hip hop', '90s east coast rap', 'jazzy samples', 'hard-hitting MPC drums', 'vinyl crackle', 'upright bass line', 'lyrical wordplay', 'raw and gritty production', 'DJ scratches', 'instrumental']
   },
   {
     name: 'Acoustic Folk',
     tags: ['singer-songwriter', 'acoustic folk', 'intimate male vocals', 'fingerpicked acoustic guitar', 'gentle harmonica', 'warm and organic production', 'heartfelt storytelling']
   },
   {
+    name: 'Chill Video Game Vibe',
+    tags: ['cozy video game music', 'animal crossing inspired', 'ukulele melody', 'light percussion', 'plucked synth bass', 'playful and quirky', 'relaxing tempo', 'whimsical sound effects', 'calm and happy mood', 'instrumental']
+  },
+  {
+    name: 'Class Trial Frenzy',
+    tags: ['high-speed acid jazz', 'psycho-pop', 'uptempo electronic beat', 'frantic piano melody', 'funky slap bass', 'energetic saxophone licks', 'video game OST', 'sense of urgency and chaos', 'detective mystery vibe']
+  },
+  {
+    name: 'Cyberpunk Noir',
+    tags: ['dark synthwave', 'dystopian ambient', 'Vangelis-inspired pads', 'heavy reverb', 'slow tempo', 'brooding saxophone melody', 'cinematic soundscape', 'rain and neon city sounds']
+  },
+  {
+    name: 'Epic Movie Trailer Score',
+    tags: ['cinematic orchestral music', 'epic score', 'hybrid orchestra', 'dramatic choir', 'braaam sound effects', 'huge percussion hits', 'building tension', 'triumphant theme', 'sound design elements', 'instrumental']
+  },
+  {
+    name: 'Ghibli-esque Fantasy',
+    tags: ['orchestral', 'Joe Hisaishi-inspired', 'emotional piano melody', 'lush string arrangements', 'whimsical woodwinds', 'magical and nostalgic', 'cinematic score', 'instrumental']
+  },
+  {
+    name: 'Gothic Symphonic Metal',
+    tags: [
+        'symphonic black metal', 
+        'gothic extreme metal', 
+        'late 1990s style', 
+        'baroque horror theatrics', 
+        'melodic tremolo riffs', 
+        'blast beats', 
+        'orchestral layering', 
+        'shrieked male highs',
+        'guttural lows',
+        'ethereal female soprano interludes', 
+        'dramatic vocal delivery', 
+        'darkly romantic mood', 
+        'Victorian-gothic atmosphere', 
+        'pipe organ', 
+        'harpsichord', 
+        'string ensembles', 
+        'dense reverb-rich production'
+    ]
+  },
+  {
     name: 'JRPG Battle Theme',
     tags: ['JRPG battle music', '16-bit soundfont', 'chiptune elements', 'fast-paced orchestral rock', 'electric guitar riffs', 'upbeat and intense', 'memorable melody', 'SNES-style reverb', 'video game OST']
-  }
-];
+  },
+  {
+    name: 'Modern Dark Pop',
+    tags: ['dark pop', 'minimalist production', 'breathy female vocals', 'heavy 808 sub bass', 'whispered ad-libs', 'introspective lyrics', 'syncopated hi-hats', 'ASMR textures', 'haunting harmonies', 'modern pop sheen']
+  },
+  {
+    name: 'Modern Lo-fi Beat',
+    tags: ['lo-fi hip hop', 'chillhop', 'jazzy chords', 'boom bap drum pattern', 'vinyl crackle', 'tape hiss', 'relaxed tempo', 'mellow rhodes piano', 'nostalgic mood', 'instrumental']
+  },
+  {
+    name: 'Pirate Metal Anthem',
+    tags: ['folk metal', 'power metal', 'sea shanty melody', 'accordion', 'fiddle', 'heavy distorted guitars', 'galloping drum beat', 'epic gang vocals', 'triumphant and adventurous']
+  },
+  {
+    name: 'Synthwave Racer',
+    tags: ['synthwave', 'retrowave', '80s aesthetic', 'driving beat', 'arpeggiated synth bass', 'neon grid visuals', 'fast tempo', 'sawtooth synth leads', 'vintage drum machine']
+  },
+  {
+    name: 'Urban J-Pop Fusion',
+    tags: ['acid jazz', 'J-pop fusion', 'funky bassline', 'smooth female vocals', 'jazzy electric piano', 'stylish lead guitar', 'city pop influence', 'upbeat and cool']
+  },
+].sort((a, b) => a.name.localeCompare(b.name));
 
-export const KEY_INSTRUMENTS: Record<string, string[]> = {
-    'Keyboards & Synths': [
-        '8-bit Synth', 'Accordion', 'Acid Bassline', 'Celeste', 'Choir Synthesizer', 'Chiptune Synth', 'Clavinet',
-        'Electric Piano', 'Farfisa Organ', 'FM Synth Bass', 'Hammond B3 Organ', 'Harpsichord', 'Keytar', 'Keyboard',
-        'Mellotron', 'Modular Synth', 'Organ', 'Overdriven Organ', 'Piano', 'Pipe Organ', 'Pluck Synth', 'Reese Bass',
-        'Rhodes Piano', 'Sawtooth Synth Lead', 'Square Wave Synth', 'Sub Bass', 'Supersaw', 'Synth Pad', 'Synthesizer',
-        'Theremin', 'Vocoder', 'Wavetable Synth', 'Wobble Bass', 'Wurlitzer'
-    ].sort(),
-    'Guitars & Bass': [
-        '12-string Acoustic Guitar', '7-String Guitar', 'Acoustic Guitar', 'Baritone Guitar', 'Bass', 'Bass Guitar',
-        'Classical Guitar', 'Dobro', 'Electric Guitar', 'Fretless Bass', 'Lap Steel Guitar', 'Overdriven Guitar',
-        'Steel-string Acoustic Guitar', 'Symphonic Guitar', 'Upright Bass'
-    ].sort(),
-    'Strings': [
-        'Cello', 'Contrabasses', 'Harp', 'Pizzicato Strings', 'String Quartet', 'Strings', 'Viola', 'Violin'
-    ].sort(),
-    'Brass': [
-        'Brass Section', 'Euphonium', 'French Horn', 'Horns', 'Trombone', 'Trumpet', 'Tuba'
-    ].sort(),
-    'Woodwinds': [
-        'Bagpipes', 'Bass Clarinet', 'Basson', 'Clarinet', 'Contrabassoon', 'English Horn', 'Flute', 'Harmonica',
-        'Oboe', 'Pan Flute', 'Piccolo', 'Recorder', 'Saxophone', 'Shakuhachi'
-    ].sort(),
-    'Percussion': [
-        '8-bit Drums', '808 Drum Machine', '808 Kick', '909 Drum Machine', '909 Snare', 'Bongos', 'Cajon', 'Chimes', 'Clap',
-        'Classic Percussion', 'Congas', 'Cowbell', 'Djembe', 'Drums', 'Glockenspiel', 'Gong', 'Handpan', 'Hi-hats', 'Kalimba',
-        'Kick Drum', 'Latin Percussion', 'Marimba', 'Percussion', 'Retro Drum Machine', 'Tabla', 'Taiko Drums',
-        'Tambourine', 'Timbales', 'Timpani', 'Triangle', 'Tubular Bells', 'Vibraphone', 'Xylophone'
-    ].sort(),
-    'Folk & World': [
-        'Balalaika', 'Banjo', 'Bouzouki', 'Charango', 'Didgeridoo', 'Duduk', 'Erhu', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar',
-        'Tin Whistle', 'Ukulele', 'Zither'
-    ].sort(),
-    'Electronic & DJ': [
-        'DJ Mixer', 'Drum Machine', 'FX Samples', 'Groovebox', 'Sampler', 'TB-303', 'TR-808', 'TR-909', 'Turntables', 'Vocal Samples',
-    ].sort()
-};
-
-export const PRODUCTION_TECHNIQUES_CATEGORIZED: Record<string, string[]> = {
-    'Rhythm & Tempo': [
-        'Adagio', 'Allegro', 'Blast Beat', 'Double-time Feel', 'Driving Rhythm', 'Four-on-the-floor', 'Half-time Feel',
-        'Intense Boss Battle Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Swing Rhythm', 'Syncopation', 'Upbeat Tempo'
-    ].sort(),
-    'Mixing & Effects': [
-        '80s Gated Reverb', 'Atmospheric', 'Big Room Reverb', 'Bitcrushing', 'Chorus Effect', 'Crisp Mix', 'Delay (Ping-Pong)',
-        'Ethereal Pads', 'Filter Sweep', 'Flanger', 'Gritty Distortion', 'Heavy Reverb', 'Lo-fi Filtering',
-        'Panning Automation', 'Parallel Compression', 'Phaser', 'Plate Reverb', 'Sidechain Compression', 'Spring Reverb',
-        'Stereo Widening', 'Tape Delay', 'Vintage Tape Saturation'
-    ].sort(),
-    'Harmony & Melody': [
-        'Arpeggiated', 'Catchy Melodies', 'Counter-melody', 'Dissonant Chords', 'Glissando', 'Lush Harmonies',
-        'Melodic Bassline', 'Modal Interchange', 'Ostinato', 'Slick Bassline', 'Soaring Anime Vocals', 'Vibrato'
-    ].sort(),
-    'Arrangement & Dynamics': [
-        'Buildup', 'Crescendo', 'Decrescendo', 'Drop', 'Dynamic Builds', 'Epic Orchestral Mix', 'Forte', 'Intricate Arrangements',
-        'Layered Textures', 'Minimalist Repetition', 'Orchestral Stabs', 'Piano (dynamic)', 'Riser', 'Sforzando',
-        'Sparse Arrangement'
-    ].sort(),
-    'Genre & Vibe': [
-        'Ambient Wash', 'Breakdown', 'City Pop Groove', 'Funky Bassline', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic',
-        'Modern Pop Sheen', 'Motown Groove', 'Shibuya-kei Influence', 'Technical Guitar Riff', 'Twangy Guitar',
-        'Wall of Sound', 'Warm Analog Synths'
-    ].sort(),
-    'Retro & Chiptune': [
-        '8-bit Sound Design', 'Bitcrushed Drums', 'Catchy 8-bit Melody', 'Chiptune Harmonies',
-        'Earthbound-inspired Sample Chops', 'Fast Arpeggios', 'Noise Channel Percussion', 'Pulse Width Modulation (PWM)',
-        'Quirky Sound Effects (SFX)', 'SNES-style Reverb', 'Triangle Wave Bass', 'Video Game OST Feel'
-    ].sort()
-};
-
-export const KEY_VSTS_CATEGORIZED: Record<string, string[]> = {
-    'Synthesizers': [
-        '3xOsc', 'Arp Sequence', 'Arturia Pigments', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive', 'Massive X',
-        'Moog Subsequent', 'Native Instruments FM8', 'NES Synth', 'Nexus 4', 'Omnisphere', 'Phase Plant', 'SID Chip Emulation', 'Spire',
-        'Supersaw Lead', 'Sylenth1', 'TAL-U-NO-LX', 'U-He Zebra2', 'Vital Audio Vital', 'Vocaloid Synth', 'Xfer Serum',
-        'Yamaha DX7-style FM Pad'
-    ].sort(),
-    'Bass': [
-        '808 Sub Bass', 'SubLab', 'Trilian', 'Wobbly Bass'
-    ].sort(),
-    'Sample Libraries': [
-        'Arturia Piano', 'Cinesamples CineStrings', 'EastWest Hollywood Strings', 'Heavyocity Gravity', 'Keyscape', 'Kontakt',
-        'Kontakt Noire Piano', 'Output Arcade', 'ProjectSAM Symphobia', 'Shreddage X', 'Spitfire Albion One', 'Spitfire Audio LABS Soft Piano'
-    ].sort(),
-    'Samples & Soundfonts': [
-      'Amen Break', 'Classic JRPG Soundfont', 'GBA-style Soundfont', 'Japanese Indie Game Soundfont', 'LinnDrum Samples',
-      'MPC Swing', 'Orchestral Hit Stab', 'Retro Game Samples', 'SGM Soundfont', 'SNES Soundfont'
-    ].sort(),
-    'Effects & Processing': [
-        'Bitcrushed', 'CamelCrusher', 'FabFilter Pro-Q 3', 'Glitch Effects', 'Granular Texture', 'iZotope Ozone',
-        'OTT Compression', 'Professional Mastering', 'RC-20 Retro Color', 'Risers/Sweeps', 'SoX Resampler',
-        'Soundtoys Decapitator', 'Trance Gate', 'Valhalla Supermassive', 'Warped Vocal Sample', 'Xfer LFO Tool'
-    ].sort()
+export const STYLE_STUDIO_TAGS: Record<string, Record<string, string[]>> = {
+    'Instruments': {
+        'Keyboards & Synths': [
+            '8-bit Synth', 'Accordion', 'Acid Bassline', 'Celeste', 'Choir Synthesizer', 'Chiptune Synth', 'Clavinet',
+            'Electric Piano', 'Farfisa Organ', 'FM Synth Bass', 'Grand Piano', 'Hammond B3 Organ', 'Harpsichord', 'Keytar', 'Keyboard',
+            'Mellotron', 'Modular Synth', 'Organ', 'Overdriven Organ', 'Piano', 'Pipe Organ', 'Pluck Synth', 'Reese Bass',
+            'Rhodes Piano', 'Sawtooth Synth Lead', 'Square Wave Synth', 'Sub Bass', 'Supersaw', 'Synth Bell', 'Synth Pad', 'Synth Strings', 'Synthesizer',
+            'Theremin', 'Upright Piano', 'Vocoder', 'Wavetable Synth', 'Wobble Bass', 'Wurlitzer'
+        ].sort(),
+        'Guitars & Bass': [
+            '12-string Acoustic Guitar', '7-String Guitar', 'Acoustic Guitar', 'Baritone Guitar', 'Bass', 'Bass Guitar',
+            'Clean Electric Guitar', 'Classical Guitar', 'Distorted Guitar', 'Dobro', 'Electric Guitar', 'Fretless Bass', 'Fuzz Bass', 'Lap Steel Guitar', 'Overdriven Guitar',
+            'Pedal Steel Guitar', 'Slap Bass', 'Steel-string Acoustic Guitar', 'Symphonic Guitar', 'Upright Bass'
+        ].sort(),
+        'Strings': [
+            'Cello', 'Contrabasses', 'Harp', 'Orchestral Strings', 'Pizzicato Strings', 'Solo Violin', 'String Ensemble', 'String Quartet', 'Strings', 'Viola', 'Violin'
+        ].sort(),
+        'Brass': [
+            'Brass Section', 'Euphonium', 'French Horn', 'Horns', 'Muted Trumpet', 'Saxophone Section', 'Trombone', 'Trumpet', 'Tuba'
+        ].sort(),
+        'Woodwinds': [
+            'Bagpipes', 'Bass Clarinet', 'Bassoon', 'Clarinet', 'Contrabassoon', 'Duduk', 'English Horn', 'Flute', 'Harmonica',
+            'Oboe', 'Pan Flute', 'Piccolo', 'Recorder', 'Saxophone', 'Shakuhachi'
+        ].sort(),
+        'Percussion': [
+            '8-bit Drums', '808 Drum Machine', '808 Kick', '808 Snare', '909 Drum Machine', '909 Hi-hat', '909 Snare', 'Bongos', 'Cajon', 'Chimes', 'Clap',
+            'Classic Percussion', 'Congas', 'Cowbell', 'Djembe', 'Drums', 'Glockenspiel', 'Gong', 'Handpan', 'Hi-hats', 'Kalimba',
+            'Kick Drum', 'Latin Percussion', 'Marimba', 'Percussion', 'Retro Drum Machine', 'Tabla', 'Taiko Drums',
+            'Tambourine', 'Timbales', 'Timpani', 'Triangle', 'Tubular Bells', 'Vibraphone', 'Xylophone'
+        ].sort(),
+        'Folk & World': [
+            'Balalaika', 'Banjo', 'Bouzouki', 'Charango', 'Didgeridoo', 'Duduk', 'Erhu', 'Koto', 'Mandolin', 'Oud', 'Shamisen', 'Sitar',
+            'Tin Whistle', 'Ukulele', 'Zither'
+        ].sort(),
+        'Electronic & DJ': [
+            'DJ Mixer', 'Drum Machine', 'FX Samples', 'Groovebox', 'Sampler', 'TB-303', 'TR-808', 'TR-909', 'Turntables', 'Vocal Samples'
+        ].sort()
+    },
+    'Production': {
+        'Rhythm & Tempo': [
+            'Adagio', 'Allegro', 'Blast Beat', 'Double-time Feel', 'Driving Rhythm', 'Four-on-the-floor', 'Half-time Feel',
+            'Intense Boss Battle Rhythm', 'Intricate Drum Fills', 'Polyrhythmic', 'Slow Tempo', 'Swing Rhythm', 'Syncopation', 'Upbeat Tempo'
+        ].sort(),
+        'Mixing & Effects': [
+            '80s Gated Reverb', 'Atmospheric', 'Big Room Reverb', 'Bitcrushing', 'Chorus Effect', 'Crisp Mix', 'Delay (Ping-Pong)',
+            'Ethereal Pads', 'Filter Sweep', 'Flanger', 'Gritty Distortion', 'Heavy Reverb', 'Lo-fi Filtering',
+            'Panning Automation', 'Parallel Compression', 'Phaser', 'Plate Reverb', 'Sidechain Compression', 'Spring Reverb',
+            'Stereo Widening', 'Tape Delay', 'Vintage Tape Saturation'
+        ].sort(),
+        'Harmony & Melody': [
+            'Arpeggiated', 'Catchy Melodies', 'Counter-melody', 'Dissonant Chords', 'Glissando', 'Lush Harmonies',
+            'Melodic Bassline', 'Modal Interchange', 'Ostinato', 'Slick Bassline', 'Soaring Anime Vocals', 'Vibrato'
+        ].sort(),
+        'Arrangement & Dynamics': [
+            'Buildup', 'Crescendo', 'Decrescendo', 'Drop', 'Dynamic Builds', 'Epic Orchestral Mix', 'Forte', 'Intricate Arrangements',
+            'Layered Textures', 'Minimalist Repetition', 'Orchestral Stabs', 'Piano (dynamic)', 'Riser', 'Sforzando',
+            'Sparse Arrangement'
+        ].sort(),
+        'Genre & Vibe': [
+            'Ambient Wash', 'Breakdown', 'City Pop Groove', 'Funky Bassline', 'J-Rock Energy', 'Kawaii Future Bass', 'Lo-fi Aesthetic',
+            'Modern Pop Sheen', 'Motown Groove', 'Shibuya-kei Influence', 'Technical Guitar Riff', 'Twangy Guitar',
+            'Wall of Sound', 'Warm Analog Synths'
+        ].sort(),
+        'Retro & Chiptune': [
+            '8-bit Sound Design', 'Bitcrushed Drums', 'Catchy 8-bit Melody', 'Chiptune Harmonies',
+            'Earthbound-inspired Sample Chops', 'Fast Arpeggios', 'Noise Channel Percussion', 'Pulse Width Modulation (PWM)',
+            'Quirky Sound Effects (SFX)', 'SNES-style Reverb', 'Triangle Wave Bass', 'Video Game OST Feel'
+        ].sort()
+    },
+    'Vocals': {
+      'Vocal Style': [
+        'Aggressive Vocals', 'Angelic Choir', 'ASMR', 'Breathy Vocals', 'Child Vocals', 'Death Metal Growl', 'Deep Male Voice', 'Falsetto', 'Female Vocals', 'Gospel Choir', 'Guttural Vocals', 'High-Pitched Vocals', 'Male Vocals', 'Melismatic Singing', 'Operatic Vocals', 'Rap Vocals', 'Raspy Voice', 'Robotic Vocals', 'Screaming', 'Shouting', 'Singing', 'Soulful Vocals', 'Spoken Word', 'Whispering', 'Yodeling'
+      ].sort(),
+      'Vocal Effects': [
+        'Auto-Tune', 'Chorus Effect', 'Distorted Vocals', 'Echo', 'Harmonies', 'Layered Vocals', 'Muffled Vocals', 'Reverb', 'Vocal Chops', 'Vocoder'
+      ].sort(),
+    },
+    'Era & Influence': {
+      'Decades': [
+        '1920s', '1930s', '1940s', '1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'
+      ].sort(),
+      'Historical Periods': [
+        'Baroque', 'Classical Era', 'Medieval', 'Renaissance', 'Romantic Period'
+      ].sort(),
+      'Cultural Influence': [
+        'African Rhythms', 'Anime OST', 'Bollywood Music', 'Brazilian Samba', 'Celtic Folk', 'City Pop Influence', 'Ghibli-esque', 'JRPG Soundtrack', 'K-Pop Sound', 'Latin Percussion', 'Motown Sound', 'Shibuya-kei', 'Vangelis-inspired'
+      ].sort(),
+    },
+    'Recording & Fidelity': {
+      'Fidelity': [
+        '4-track Cassette Sound', '8-bit', '12-bit', '16-bit', 'Analog Warmth', 'Clean Production', 'Demo Quality', 'DIY Aesthetic', 'High-Fidelity', 'Lo-fi', 'Noisy', 'Polished Production', 'Raw Recording', 'Studio Quality'
+      ].sort(),
+      'Ambiance & Space': [
+        'Arena Reverb', 'Auditorium Ambience', 'Cathedral Reverb', 'Chamber Reverb', 'Club Atmosphere', 'Concert Hall Sound', 'Intimate Recording', 'Large Hall Recording', 'Outdoor Ambience', 'Room Noise', 'Stadium Sound', 'Underwater Effect'
+      ].sort(),
+      'Hardware & Medium': [
+        'Cassette Tape Hiss', 'Fairlight CMI sounds', 'LinnDrum Machine', 'MPC Drums', 'Roland TR-808', 'Roland TR-909', 'Talkbox', 'Vinyl Crackle', 'Vintage Microphone Sound'
+      ].sort(),
+    },
+    'Sound Effects': {
+      'Nature & Weather': ['Animal Sounds', 'Birds Chirping', 'Ocean Waves', 'Rain Sounds', 'Thunder', 'Wind Howling'].sort(),
+      'Urban & Mechanical': ['Alarm Clock', 'Car Horns', 'City Ambience', 'Explosion', 'Police Siren', 'Static', 'Train Sounds', 'Typing Sounds'].sort(),
+      'Abstract & Sci-Fi': ['Alien Sounds', 'Computer Noises', 'Glitch Sounds', 'Laser Zaps', 'Riser', 'Sci-Fi Soundscape', 'Swoosh', 'Teleport Sound'].sort(),
+    },
+    'VSTs & Software': {
+        'Synthesizers': [
+            '3xOsc', 'Arp Sequence', 'Arturia Pigments', 'Diva', 'FM Synthesis Pad', 'Magical 8bit Plug', 'Massive', 'Massive X',
+            'Moog Subsequent', 'Native Instruments FM8', 'NES Synth', 'Nexus 4', 'Omnisphere', 'Phase Plant', 'SID Chip Emulation', 'Spire',
+            'Supersaw Lead', 'Sylenth1', 'TAL-U-NO-LX', 'U-He Zebra2', 'Vital Audio Vital', 'Vocaloid Synth', 'Xfer Serum',
+            'Yamaha DX7-style FM Pad'
+        ].sort(),
+        'Bass': [
+            '808 Sub Bass', 'SubLab', 'Trilian', 'Wobbly Bass'
+        ].sort(),
+        'Sample Libraries': [
+            'Arturia Piano', 'Cinesamples CineStrings', 'EastWest Hollywood Strings', 'Heavyocity Gravity', 'Keyscape', 'Kontakt',
+            'Kontakt Noire Piano', 'Output Arcade', 'ProjectSAM Symphobia', 'Shreddage X', 'Spitfire Albion One', 'Spitfire Audio LABS Soft Piano'
+        ].sort(),
+        'Samples & Soundfonts': [
+          'Amen Break', 'Classic JRPG Soundfont', 'GBA-style Soundfont', 'Japanese Indie Game Soundfont', 'LinnDrum Samples',
+          'MPC Swing', 'Orchestral Hit Stab', 'Retro Game Samples', 'SGM Soundfont', 'SNES Soundfont'
+        ].sort(),
+        'Effects & Processing': [
+            'Bitcrushed', 'CamelCrusher', 'FabFilter Pro-Q 3', 'Glitch Effects', 'Granular Texture', 'iZotope Ozone',
+            'OTT Compression', 'Professional Mastering', 'RC-20 Retro Color', 'Risers/Sweeps', 'SoX Resampler',
+            'Soundtoys Decapitator', 'Trance Gate', 'Valhalla Supermassive', 'Warped Vocal Sample', 'Xfer LFO Tool'
+        ].sort()
+    }
 };
 
 export const MOOD_COLORS: Record<string, { from: string; via: string; to: string }> = {
@@ -756,6 +846,7 @@ export const MOOD_COLORS: Record<string, { from: string; via: string; to: string
   'Dark': { from: '#171717', via: 'rgba(23, 37, 84, 0.4)', to: '#111827' },
   'Dreamy': { from: '#86198f', via: 'rgba(217, 70, 239, 0.3)', to: '#111827' },
   'Epic': { from: '#581c87', via: 'rgba(212, 175, 55, 0.3)', to: '#111827' },
+  'Emotional': { from: '#5b21b6', via: 'rgba(139, 92, 246, 0.3)', to: '#111827' },
   'Hopeful': { from: '#065f46', via: 'rgba(16, 185, 129, 0.3)', to: '#111827' },
   'Mysterious': { from: '#4a044e', via: 'rgba(17, 24, 39, 0.5)', to: '#111827' },
   'Romantic': { from: '#be185d', via: 'rgba(251, 146, 60, 0.3)', to: '#111827' },

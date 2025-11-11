@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { GENRES, MOODS, LYRICAL_STYLES, COUNTRY_VIBES } from '../constants';
 import { Select } from './Select';
@@ -71,7 +72,7 @@ export const SongDNA: React.FC<SongDNAProps> = ({
                         </label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={onImproveTopic} disabled={isImproving || !topic.trim() || isBusy} variant="secondary" className="!py-1 !px-2.5 text-xs">
+                        <Button onClick={onImproveTopic} disabled={!topic.trim() || isBusy} variant="secondary" className="!py-1 !px-2.5 text-xs">
                             <Icon name="regenerate" className="w-4 h-4" />
                             {isImproving ? 'Improving...' : 'Improve Topic'}
                         </Button>
@@ -114,7 +115,7 @@ export const SongDNA: React.FC<SongDNAProps> = ({
             <Select label="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} options={GENRES} disabled={isBusy} />
             <Select label="Mood" value={mood} onChange={(e) => setMood(e.target.value)} options={MOODS} disabled={isBusy} />
             <Select label="Country of Influence (Optional)" value={countryVibe} onChange={(e) => setCountryVibe(e.target.value)} options={COUNTRY_VIBES} disabled={isBusy} />
-            <Select label="Lyrical Style" value={lyricalStyle} onChange={(e) => setLyricalStyle(e.target.value)} options={LYRICAL_STYLES} disabled={isBusy}/>
+            <Select label="Lyrical Style" value={lyricalStyle} onChange={(e) => setLyricalStyle(e.target.value)} options={LYRICAL_STYLES} disabled={isInstrumental || isBusy}/>
         </div>
     );
 };

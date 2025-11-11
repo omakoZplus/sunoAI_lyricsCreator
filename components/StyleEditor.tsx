@@ -1,5 +1,8 @@
+
+
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { LANGUAGES, KEY_INSTRUMENTS, PRODUCTION_TECHNIQUES_CATEGORIZED, KEY_VSTS_CATEGORIZED } from '../constants';
+import { LANGUAGES, STYLE_STUDIO_TAGS } from '../constants';
 import { Select } from './Select';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -34,7 +37,7 @@ interface StyleEditorProps {
   sunoExcludeTags: string[];
   setSunoExcludeTags: (tags: string[]) => void;
   promptError: string | null;
-  onClearSession: () => void;
+  onStartNewSong: () => void;
   showMetatagEditor: boolean;
   setShowMetatagEditor: (show: boolean) => void;
   previousSunoPromptTags: string[] | null;
@@ -42,12 +45,7 @@ interface StyleEditorProps {
   onClearSunoPromptTags: () => void;
 }
 
-type TagCategory = 'instruments' | 'production' | 'vsts';
-const STUDIO_TABS: { key: TagCategory, name: string }[] = [
-    { key: 'instruments', name: 'Instruments' },
-    { key: 'production', name: 'Production' },
-    { key: 'vsts', name: 'VSTs' },
-];
+const STUDIO_TABS: { key: string; name: string }[] = Object.keys(STYLE_STUDIO_TAGS).map(key => ({ key, name: key }));
 
 export const StyleEditor: React.FC<StyleEditorProps> = ({
   topic,
@@ -69,7 +67,7 @@ export const StyleEditor: React.FC<StyleEditorProps> = ({
   sunoExcludeTags,
   setSunoExcludeTags,
   promptError,
-  onClearSession,
+  onStartNewSong,
   showMetatagEditor,
   setShowMetatagEditor,
   previousSunoPromptTags,
@@ -80,378 +78,257 @@ export const StyleEditor: React.FC<StyleEditorProps> = ({
   const [charCountExceeded, setCharCountExceeded] = useState(false);
   const [excludeCopyText, setExcludeCopyText] = useState('Copy');
   const [excludeCharCountExceeded, setExcludeCharCountExceeded] = useState(false);
-  const [activeStudioTab, setActiveStudioTab] = useState<TagCategory>('instruments');
+  const [activeStudioTab, setActiveStudioTab] = useState<string>(STUDIO_TABS[0].key);
   const [draggedTag, setDraggedTag] = useState<string | null>(null);
 
+  const [activeStudioCategory, setActiveStudioCategory] = useState<string>(Object.keys(STYLE_STUDIO_TAGS[activeStudioTab])[0]);
+
+  useEffect(() => {
+    // When the main tab changes, select the first category of that tab
+    setActiveStudioCategory(Object.keys(STYLE_STUDIO_TAGS[activeStudioTab])[0]);
+  }, [activeStudioTab]);
+
+  const sunoPromptString = useMemo(() => sunoPromptTags.join(', '), [sunoPromptTags]);
+  const sunoExcludeString = useMemo(() => sunoExcludeTags.join(', '), [sunoExcludeTags]);
+
+  useEffect(() => {
+    setCharCountExceeded(sunoPromptString.length > 1000);
+  }, [sunoPromptString]);
+
+  useEffect(() => {
+    setExcludeCharCountExceeded(sunoExcludeString.length > 1000);
+  }, [sunoExcludeString]);
+
+  const handleCopy = (textToCopy: string, setText: (text: string) => void, originalText: string) => {
+    navigator.clipboard.writeText(textToCopy);
+    setText('Copied!');
+    setTimeout(() => setText(originalText), 2000);
+  };
+
+  const addTag = (tag: string): boolean => {
+    if (!sunoPromptTags.find(t => t.toLowerCase() === tag.toLowerCase())) {
+        const newTags = [...sunoPromptTags, tag];
+        setSunoPromptTags(newTags);
+        return true;
+    }
+    return false;
+  };
+  const removeTag = (tagToRemove: string) => setSunoPromptTags(sunoPromptTags.filter(tag => tag !== tagToRemove));
+  
+  const addExcludeTag = (tag: string): boolean => {
+    if (!sunoExcludeTags.find(t => t.toLowerCase() === tag.toLowerCase())) {
+        setSunoExcludeTags([...sunoExcludeTags, tag]);
+        return true;
+    }
+    return false;
+  };
+  const removeExcludeTag = (tagToRemove: string) => setSunoExcludeTags(sunoExcludeTags.filter(tag => tag !== tagToRemove));
+
   const allTagSuggestions = useMemo(() => {
-    const allInstruments = Object.values(KEY_INSTRUMENTS).flat();
-    const allProduction = Object.values(PRODUCTION_TECHNIQUES_CATEGORIZED).flat();
-    const allVSTs = Object.values(KEY_VSTS_CATEGORIZED).flat();
-    return Array.from(new Set([...allInstruments, ...allProduction, ...allVSTs]));
+    return Object.values(STYLE_STUDIO_TAGS).flatMap(categoryData => Object.values(categoryData).flat());
   }, []);
-
-  const sunoPromptText = sunoPromptTags.join(', ');
-  const charCount = sunoPromptText.length;
   
-  const sunoExcludeText = sunoExcludeTags.join(', ');
-  const excludeCharCount = sunoExcludeText.length;
-
-  useEffect(() => {
-    if (charCountExceeded) {
-      const timer = setTimeout(() => setCharCountExceeded(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [charCountExceeded]);
-
-  useEffect(() => {
-    if (excludeCharCountExceeded) {
-      const timer = setTimeout(() => setExcludeCharCountExceeded(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [excludeCharCountExceeded]);
-
-  const handlePromptCopy = () => {
-    navigator.clipboard.writeText(sunoPromptText);
-    setPromptCopyText('Copied!');
-    setTimeout(() => setPromptCopyText('Copy'), 2000);
+  const handleDragStart = (tag: string) => setDraggedTag(tag);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      if (draggedTag) {
+          addTag(draggedTag);
+          setDraggedTag(null);
+      }
   };
-  
-  const handleExcludeCopy = () => {
-    navigator.clipboard.writeText(sunoExcludeText);
-    setExcludeCopyText('Copied!');
-    setTimeout(() => setExcludeCopyText('Copy'), 2000);
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setSunoPromptTags(sunoPromptTags.filter(tag => tag !== tagToRemove));
-  };
-  
-  const handleRemoveExcludeTag = (tagToRemove: string) => {
-    setSunoExcludeTags(sunoExcludeTags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleAddTag = (tagToAdd: string): boolean => {
-    const trimmedTag = tagToAdd.trim();
-    if (trimmedTag && !sunoPromptTags.includes(trimmedTag)) {
-       const prospectivePrompt = [...sunoPromptTags, trimmedTag].join(', ');
-       if (prospectivePrompt.length <= 1000) {
-        setSunoPromptTags([...sunoPromptTags, trimmedTag]);
-        return true; // Success
-       } else {
-        setCharCountExceeded(true);
-        return false; // Failed
-       }
-    }
-    return false; // Failed (empty or duplicate)
-  };
-  
-  const handleAddExcludeTag = (tagToAdd: string): boolean => {
-    const trimmedTag = tagToAdd.trim();
-    if (trimmedTag && !sunoExcludeTags.includes(trimmedTag)) {
-       const prospectivePrompt = [...sunoExcludeTags, trimmedTag].join(', ');
-       if (prospectivePrompt.length <= 1000) {
-        setSunoExcludeTags([...sunoExcludeTags, trimmedTag]);
-        return true; // Success
-       } else {
-        setExcludeCharCountExceeded(true);
-        return false; // Failed
-       }
-    }
-    return false; // Failed (empty or duplicate)
-  };
-
-  const handleToggleTag = (tag: string) => {
-    if (sunoPromptTags.includes(tag)) {
-      handleRemoveTag(tag);
-    } else {
-      handleAddTag(tag);
-    }
-  };
-
-  const handleBlendedTags = (tags: string[]) => {
-    const newTags = Array.from(new Set([...sunoPromptTags, ...tags]));
-    
-    let currentPrompt = '';
-    const finalTags: string[] = [];
-    for (const tag of newTags) {
-        const tempPrompt = currentPrompt ? `${currentPrompt}, ${tag}` : tag;
-        if (tempPrompt.length <= 1000) {
-            currentPrompt = tempPrompt;
-            finalTags.push(tag);
-        } else {
-            setCharCountExceeded(true);
-            break;
-        }
-    }
-    setSunoPromptTags(finalTags);
-  };
-
-  const handleApplyStyleTemplate = (tags: string[]) => {
-    const prospectivePrompt = tags.join(', ');
-    if (prospectivePrompt.length > 1000) {
-        alert('This style template exceeds the character limit.');
-        setCharCountExceeded(true);
-    } else {
-        setSunoPromptTags(tags);
-    }
-  };
-
-  const handleDeconstructStyle = (tags: string[]) => {
-    handleBlendedTags(tags); // Reuse the same logic as blending to append unique tags
-  };
-
-  const handleDragStart = (tag: string) => {
-    setDraggedTag(tag);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, overTag: string) => {
-    e.preventDefault();
-    if (draggedTag && draggedTag !== overTag) {
-        const draggedIndex = sunoPromptTags.indexOf(draggedTag);
-        const overIndex = sunoPromptTags.indexOf(overTag);
-
-        if (draggedIndex > -1 && overIndex > -1) {
-            const items = Array.from(sunoPromptTags);
-            items.splice(draggedIndex, 1);
-            items.splice(overIndex, 0, draggedTag);
-            setSunoPromptTags(items);
-        }
-    }
-  };
-
-  const handleDragEnd = () => {
-    setDraggedTag(null);
-  };
-
-  const renderStudioContent = () => {
-      let categories: Record<string, string[]> = {};
-      if (activeStudioTab === 'instruments') categories = KEY_INSTRUMENTS;
-      if (activeStudioTab === 'production') categories = PRODUCTION_TECHNIQUES_CATEGORIZED;
-      if (activeStudioTab === 'vsts') categories = KEY_VSTS_CATEGORIZED;
-      
-      return (
-        <div className="space-y-6 max-h-80 overflow-y-auto pr-2">
-            {Object.entries(categories).map(([category, tags]) => (
-                <div key={category}>
-                    <h4 className="text-sm font-medium text-gray-400 mb-2">{category}</h4>
-                    <div className="flex flex-wrap gap-2">
-                        {tags.map(tag => (
-                            <ToggleChip
-                                key={tag}
-                                text={tag}
-                                isActive={sunoPromptTags.includes(tag)}
-                                onClick={() => handleToggleTag(tag)}
-                            />
-                        ))}
-                    </div>
-                </div>
-            ))}
-        </div>
-      );
-  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-8">
-      <div id="style-of-music-section" className="space-y-4">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6 bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 shadow-lg">
+        <div id="style-of-music-section">
             <h2 className="text-xl font-bold text-gray-200">Style of Music</h2>
-            <div className="flex items-center gap-3">
-                <button 
-                  onClick={onClearSunoPromptTags} 
-                  className="text-xs text-gray-500 hover:text-red-400 transition-colors disabled:text-gray-600 disabled:hover:text-gray-600 disabled:cursor-not-allowed"
-                  disabled={sunoPromptTags.length === 0}
-                >
-                  Clear All
-                </button>
-              <div className={`flex items-center gap-2 transition-transform duration-300 ${charCountExceeded ? 'scale-110' : ''}`}>
-                <CharCountCircle count={charCount} limit={1000} color="purple" />
-              </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading || !topic.trim()} variant="secondary" className="flex-grow">
-              <Icon name="regenerate" />
-              {isPromptLoading ? 'Working...' : 'Generate Suggestions'}
-            </Button>
-            {previousSunoPromptTags !== null && (
-              <Button onClick={onUndoStyleSuggestion} variant="secondary" className="flex-shrink-0 !p-2.5" title="Undo suggestion">
-                  <Icon name="undo" className="w-5 h-5" />
-              </Button>
-            )}
-          </div>
-          
-          <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
-            {isPromptLoading && sunoPromptTags.length === 0 ? (
-              <p className="text-gray-400">Thinking...</p>
-            ) : promptError ? (
-              <p className="text-red-400">{promptError}</p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {sunoPromptTags.map(tag => (
-                    <div
-                      key={tag}
-                      draggable
-                      onDragStart={() => handleDragStart(tag)}
-                      onDragOver={(e) => handleDragOver(e, tag)}
-                      onDragEnd={handleDragEnd}
-                      className={`cursor-move transition-opacity duration-200 ${draggedTag === tag ? 'opacity-30' : 'opacity-100'}`}
-                    >
-                      <Chip text={tag} onRemove={() => handleRemoveTag(tag)} color="purple" />
+            <div className="mt-4 space-y-4">
+                <div onDrop={handleDrop} onDragOver={handleDragOver} className={`min-h-[120px] bg-gray-900/70 border ${charCountExceeded ? 'border-red-500' : 'border-gray-600'} rounded-lg p-3 flex flex-col`}>
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                            {previousSunoPromptTags !== null && (
+                                <Button onClick={onUndoStyleSuggestion} variant="secondary" className="!py-1 !px-2.5 text-xs">
+                                    <Icon name="undo" className="w-4 h-4" />
+                                    Undo
+                                </Button>
+                            )}
+                            <label htmlFor="suno-prompt" className="block text-sm font-medium text-gray-300">Style Prompt</label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <CharCountCircle count={sunoPromptString.length} limit={1000} />
+                             <Button onClick={() => handleCopy(sunoPromptString, setPromptCopyText, 'Copy')} variant="secondary" className="!py-1 !px-2.5 text-xs">{promptCopyText}</Button>
+                        </div>
                     </div>
-                  ))}
-                  {sunoPromptTags.length === 0 && <p className="text-gray-500 text-sm p-1">Generate or add style tags...</p>}
+                    <div className="flex-grow flex flex-wrap gap-2 content-start pt-2">
+                        {sunoPromptTags.length === 0 ? (
+                            <p className="text-gray-500 text-sm p-1">Use "Generate Suggestions" or add tags from the Style Studio below.</p>
+                        ) : (
+                            sunoPromptTags.map(tag => <Chip key={tag} text={tag} onRemove={() => removeTag(tag)} />)
+                        )}
+                    </div>
                 </div>
-                <TagInput 
-                  onAddTag={handleAddTag}
-                  allSuggestions={allTagSuggestions}
-                  existingTags={sunoPromptTags}
-                />
-              </>
-            )}
-          </div>
-          {sunoPromptTags.length > 0 && !promptError && (
-            <Button onClick={handlePromptCopy} variant="secondary" fullWidth>
-                <Icon name="copy" />
-                {promptCopyText}
-            </Button>
-          )}
-        </div>
-      </div>
 
-      <div className="pt-8 border-t border-gray-700 space-y-4">
-        <Button id="generate-button" onClick={onGenerate} disabled={isLoading || !topic.trim()} fullWidth>
-            {isLoading ? (isInstrumental ? 'Generating Track...' : 'Generating Lyrics...') : (isInstrumental ? 'Generate Instrumental Track' : 'Generate Lyrics')}
-        </Button>
-         <div className="text-center">
-            <button onClick={onClearSession} className="text-sm text-gray-500 hover:text-red-400 transition-colors duration-200">
-                Start New Song
-            </button>
-        </div>
-      </div>
-
-      <Accordion title="Advanced Style Editor">
-        <div className="space-y-4 pt-4">
-          <div className="space-y-6 px-3">
-            <div>
-              <label htmlFor="artists" className="block text-sm font-medium text-gray-300 mb-2">
-                  Artists to inspire (for style)
-              </label>
-              <input
-                type="text"
-                id="artists"
-                value={artists}
-                onChange={(e) => setArtists(e.target.value)}
-                placeholder="e.g., Daft Punk, Queen"
-                className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-              />
+                <div className="grid grid-cols-2 gap-3">
+                    <Button onClick={onClearSunoPromptTags} variant="secondary">Clear All Tags</Button>
+                    <Button onClick={onGenerateSunoPrompt} disabled={isPromptLoading}>
+                        <Icon name="regenerate" className={isPromptLoading ? 'animate-spin' : ''} />
+                        {isPromptLoading ? 'Generating...' : 'Generate Suggestions'}
+                    </Button>
+                </div>
+                {promptError && <p className="text-red-400 text-xs text-center">{promptError}</p>}
             </div>
-          </div>
-          
-          <div className="max-h-[45vh] overflow-y-auto pr-2 -mr-2">
-            <Accordion title="Style Studio" defaultOpen={true}>
-                <div className="flex border-b border-gray-600 mb-4">
-                    {STUDIO_TABS.map(tab => (
-                        <button 
+        </div>
+
+        <StyleTemplates onApplyTemplate={(tags) => setSunoPromptTags(Array.from(new Set([...sunoPromptTags, ...tags])))} />
+
+        <Accordion title="AI Style Tools" defaultOpen={false} storageKey="accordion-ai-tools-v1">
+            <div className="space-y-4">
+                <StyleBlender onTagsGenerated={(tags) => setSunoPromptTags(Array.from(new Set([...sunoPromptTags, ...tags])))} />
+                <StyleDeconstructor onDeconstruct={(tags) => setSunoPromptTags(Array.from(new Set([...sunoPromptTags, ...tags])))} />
+            </div>
+        </Accordion>
+
+        <Accordion title="Style Studio" defaultOpen={false} storageKey="accordion-style-studio-v1">
+          <div className="space-y-4">
+            <div className="border-b border-gray-700">
+                <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Tabs">
+                    {STUDIO_TABS.map((tab) => (
+                        <button
                             key={tab.key}
                             onClick={() => setActiveStudioTab(tab.key)}
-                            className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                activeStudioTab === tab.key
-                                  ? 'border-b-2 border-purple-400 text-purple-300'
-                                  : 'text-gray-400 hover:text-white'
-                            }`}
+                            className={`${ tab.key === activeStudioTab ? 'border-purple-400 text-purple-300' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'}
+                                whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors`}
                         >
                             {tab.name}
                         </button>
                     ))}
+                </nav>
+            </div>
+
+            <TagInput onAddTag={addTag} allSuggestions={allTagSuggestions} existingTags={sunoPromptTags} />
+
+            <div className="flex gap-4" style={{ height: '350px' }}>
+                <div className="w-1/3 flex-shrink-0 bg-gray-900/50 rounded-lg p-2 overflow-y-auto">
+                    <ul className="space-y-1">
+                        {Object.keys(STYLE_STUDIO_TAGS[activeStudioTab]).map(category => (
+                            <li key={category}>
+                                <button 
+                                    onClick={() => setActiveStudioCategory(category)}
+                                    className={`w-full text-left text-sm p-2 rounded-md transition-colors ${activeStudioCategory === category ? 'bg-purple-600 text-white' : 'text-gray-300 hover:bg-gray-700/50'}`}
+                                >
+                                    {category}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                <div className="mb-4">
-                    {renderStudioContent()}
+
+                <div className="w-2/3 flex-grow bg-gray-900/50 rounded-lg p-3 overflow-y-auto">
+                    {activeStudioCategory && STYLE_STUDIO_TAGS[activeStudioTab][activeStudioCategory] && (
+                        <div className="flex flex-wrap gap-2">
+                            {STYLE_STUDIO_TAGS[activeStudioTab][activeStudioCategory].map(tag => (
+                                <div key={tag} draggable onDragStart={() => handleDragStart(tag)} className="cursor-grab">
+                                    <ToggleChip 
+                                        text={tag} 
+                                        isActive={sunoPromptTags.includes(tag)} 
+                                        onClick={() => sunoPromptTags.includes(tag) ? removeTag(tag) : addTag(tag)} 
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-700 space-y-4">
-                    <StyleTemplates onApplyTemplate={handleApplyStyleTemplate} />
-                    <StyleBlender onTagsGenerated={handleBlendedTags} />
-                    <StyleDeconstructor onDeconstruct={handleDeconstructStyle} />
-                </div>
-            </Accordion>
-            
-            <Accordion 
-              title="Exclude From Style"
-              headerControls={
-                <div className={`flex items-center gap-2 transition-transform duration-300 ${excludeCharCountExceeded ? 'scale-110' : ''}`}>
-                  <CharCountCircle count={excludeCharCount} limit={1000} color="rose"/>
-                </div>
-              }
-            >
-              <div className="space-y-4">
-                <div className="bg-gray-900/70 border border-gray-600 rounded-lg p-3 min-h-[120px]">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {sunoExcludeTags.map(tag => (
-                        <Chip key={tag} text={tag} onRemove={() => handleRemoveExcludeTag(tag)} color="rose" />
-                      ))}
-                      {sunoExcludeTags.length === 0 && <p className="text-gray-500 text-sm p-1">Add tags to exclude from the style...</p>}
-                    </div>
-                    <TagInput 
-                      onAddTag={handleAddExcludeTag}
-                      allSuggestions={[]}
-                      existingTags={sunoExcludeTags}
+            </div>
+            <p className="text-xs text-gray-500 text-center italic">Tip: Click a tag to add it to your prompt, or drag it into the box above!</p>
+          </div>
+        </Accordion>
+        
+        <Accordion title="Advanced Style Editor" defaultOpen={false} storageKey="accordion-advanced-style-v1">
+            <div className="space-y-4">
+                <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} options={LANGUAGES} disabled={isInstrumental} />
+                <div>
+                    <label htmlFor="voiceStyle" className="block text-sm font-medium text-gray-300 mb-2">
+                        Voice Style / Vocalist Description
+                    </label>
+                    <input
+                        type="text"
+                        id="voiceStyle"
+                        value={voiceStyle}
+                        onChange={(e) => setVoiceStyle(e.target.value)}
+                        placeholder="e.g., soulful female vocals, raw male baritone"
+                        className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition disabled:bg-gray-800/50 disabled:cursor-not-allowed"
+                        disabled={isInstrumental}
                     />
                 </div>
-                {sunoExcludeTags.length > 0 && (
-                   <Button onClick={handleExcludeCopy} variant="secondary" fullWidth>
-                      <Icon name="copy" />
-                      {excludeCopyText}
-                  </Button>
-                )}
-              </div>
-            </Accordion>
-          </div>
-          
-           <div className="pt-4 border-t border-gray-700 space-y-6 px-3">
-              <h3 className="text-lg font-semibold text-gray-300">Track Settings</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} options={LANGUAGES} disabled={isInstrumental} />
-                <div className="grid grid-cols-2 gap-4 items-end">
-                    <div>
+                <div>
+                    <label htmlFor="artists" className="block text-sm font-medium text-gray-300 mb-2">
+                        Inspirational Artists / Keywords
+                    </label>
+                    <input
+                        type="text"
+                        id="artists"
+                        value={artists}
+                        onChange={(e) => setArtists(e.target.value)}
+                        placeholder="e.g., Daft Punk, Chrono Trigger OST, Queen"
+                        className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+                    />
+                     <p className="mt-1 text-xs text-gray-400">The AI will analyze their style, not use their names.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                       <label htmlFor="bpm" className="block text-sm font-medium text-gray-300 mb-2">
                           BPM
                       </label>
                       <input
-                        type="number"
-                        id="bpm"
-                        value={bpm}
-                        onChange={(e) => setBpm(e.target.value)}
-                        placeholder="e.g., 120"
-                        className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
+                          type="text"
+                          id="bpm"
+                          value={bpm}
+                          onChange={(e) => setBpm(e.target.value)}
+                          placeholder="e.g., 120"
+                          className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
                       />
-                    </div>
+                  </div>
+                  <div className="pt-7">
                     <BpmTapper onBpmChange={setBpm} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label htmlFor="voiceStyle" className="block text-sm font-medium text-gray-300 mb-2">
-                    Vocal Identity (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="voiceStyle"
-                  value={voiceStyle}
-                  onChange={(e) => setVoiceStyle(e.target.value)}
-                  placeholder="e.g., breathy female pop vocal"
-                  className="w-full bg-gray-900/70 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition disabled:bg-gray-800/50 disabled:text-gray-500 disabled:cursor-not-allowed"
-                  disabled={isInstrumental}
-                />
-              </div>
-              <ToggleSwitch
-                label="Advanced Metatag Editor"
-                enabled={showMetatagEditor}
-                onChange={setShowMetatagEditor}
-              />
-           </div>
+
+                <div className="pt-2">
+                  <ToggleSwitch
+                    label="Metatag Inspector in Editor"
+                    enabled={showMetatagEditor}
+                    onChange={setShowMetatagEditor}
+                  />
+                </div>
+
+                <div>
+                    <div className={`bg-gray-900/70 border ${excludeCharCountExceeded ? 'border-red-500' : 'border-gray-600'} rounded-lg p-3 flex flex-col`}>
+                        <div className="flex justify-between items-start mb-2">
+                            <label htmlFor="suno-exclude" className="block text-sm font-medium text-gray-300">Negative Prompt</label>
+                            <div className="flex items-center gap-2">
+                                <CharCountCircle count={sunoExcludeString.length} limit={1000} color="rose" />
+                                <Button onClick={() => handleCopy(sunoExcludeString, setExcludeCopyText, 'Copy')} variant="secondary" className="!py-1 !px-2.5 text-xs">{excludeCopyText}</Button>
+                            </div>
+                        </div>
+                        <div className="flex-grow flex flex-wrap gap-2 content-start pt-2">
+                            {sunoExcludeTags.map(tag => <Chip key={tag} text={tag} onRemove={() => removeExcludeTag(tag)} color="rose" />)}
+                        </div>
+                    </div>
+                     <TagInput onAddTag={addExcludeTag} allSuggestions={[]} existingTags={sunoExcludeTags} />
+                </div>
+            </div>
+        </Accordion>
+        
+        <div className="flex items-center gap-4 mt-6">
+            <Button onClick={onStartNewSong} variant="secondary">
+                <Icon name="plus" className="w-5 h-5"/>
+                New Song
+            </Button>
+            <Button id="generate-button" onClick={onGenerate} disabled={isLoading || !topic.trim()} fullWidth>
+                {isLoading ? (isInstrumental ? 'Generating Instrumental...' : 'Generating Lyrics...') : (isInstrumental ? 'Generate Instrumental' : 'Generate Lyrics')}
+            </Button>
         </div>
-      </Accordion>
     </div>
   );
 };

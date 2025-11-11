@@ -40,6 +40,11 @@
         white-space: nowrap;
         border-width: 0;
       }
+      /* Styles for resizing cursor and user-select */
+      body.resizing, body.resizing * {
+        cursor: col-resize !important;
+        user-select: none;
+      }
       /* Styles for Proactive Lyrical Assistant */
       .suggestion-underline {
         text-decoration: underline;
@@ -82,6 +87,15 @@
       .meter-bar-unstable {
         background-image: linear-gradient(to bottom, #F87171 50%, transparent 50%);
         background-size: 100% 8px;
+      }
+      @keyframes gradient-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      .animated-gradient {
+          background-size: 200% 200%;
+          animation: gradient-shift 15s ease-in-out infinite;
       }
     </style>
   <script type="importmap">

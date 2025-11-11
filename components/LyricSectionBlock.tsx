@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { SongSection } from '../types';
 import { Icon } from './Icon';
@@ -51,7 +49,7 @@ export const LyricSectionBlock: React.FC<LyricSectionBlockProps> = React.memo(({
   return (
     <div
       id={`section-block-${section.id}`}
-      className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 flex gap-3 group relative"
+      className="bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 flex gap-3 group relative transition-colors hover:border-gray-600"
     >
         <div className="flex-grow">
             <div className="flex justify-between items-center mb-2">

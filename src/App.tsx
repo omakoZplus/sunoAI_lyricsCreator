@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Header } from './components/Header';
 import { Controls } from './components/Controls';
@@ -328,7 +322,7 @@ const App: React.FC = () => {
         const improved = await improveTopic(activeProject.topic);
         setTopic(improved);
     } catch (err) {
-        // Fix: The error object `err` is of type `unknown`. Explicitly check if it's an instance of `Error` before accessing `err.message` to prevent type errors.
+        // FIX: The error object `err` is of type `unknown`. Explicitly check if it's an instance of `Error` before accessing `err.message` to prevent type errors.
         const errorMessage = err instanceof Error ? err.message : "Could not improve topic.";
         setError(errorMessage);
         setPreviousTopic(null);
@@ -484,7 +478,7 @@ const App: React.FC = () => {
             }
         }
     } catch (err) {
-        // Fix: The error object `err` is of type `unknown`. Explicitly check if it's an instance of `Error` before accessing `err.message` to prevent type errors.
+        // FIX: The error object `err` is of type `unknown`. Explicitly check if it's an instance of `Error` before accessing `err.message` to prevent type errors.
         const errorMessage = err instanceof Error ? err.message : 'Failed to continue song.';
         setError(errorMessage);
     } finally {

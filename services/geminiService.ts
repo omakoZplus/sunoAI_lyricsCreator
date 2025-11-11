@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { SectionAnalysis, SongStarterKit, LyricalIssue } from "../types";
 import { GENRES, MOODS } from "../constants";
@@ -18,7 +16,9 @@ const handleGeminiError = (error: unknown, context: string): Error => {
 
   if (error instanceof Error) {
     const errorMessage = error.message.toLowerCase();
-    if (errorMessage.includes('safety')) {
+    if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('resource_exhausted')) {
+      message = 'You have exceeded your request quota. Please check your plan and billing details, or try again later.';
+    } else if (errorMessage.includes('safety')) {
       message = 'Request blocked for safety reasons. Please adjust your prompt.';
     } else if (errorMessage.includes('400')) {
       message = 'The AI model couldn\'t process the request. Try rephrasing your input.';
@@ -295,14 +295,14 @@ export const generateSunoPrompt = async (
     1.  **ABSOLUTELY NO COPYRIGHTED NAMES:** You must not mention specific artist names, band names, or video game titles in the final output tags. This is critical to avoid copyright issues. Instead, analyze the requested style and translate it into descriptive, generic terms.
         - **Artist Example:** Instead of "like Daft Punk", generate tags like "funky filtered disco house", "vocoder vocals", "robotic voice effects", "punchy French house bassline".
         - **Game Example:** Instead of "like the soundtrack from Chrono Trigger", generate tags like "nostalgic 16-bit JRPG soundtrack", "chiptune melodies with orchestral elements", "SNES-style reverb".
-    2.  **DETAILED & SPECIFIC:** Each tag in the list should be a descriptive phrase. Go beyond simple genre tags.
-    3.  **COVER MULTIPLE FACETS:** Your tags should touch on several of the following aspects:
-        *   Genre/Subgenre: Be specific (e.g., "Dream Pop", "Melodic Death Metal", "UK Garage").
-        *   Instrumentation: Name specific instruments and their sound (e.g., "punchy 808 bass", "distorted, fuzzy guitar riff", "warm Rhodes piano", "lush string orchestra").
-        *   Tempo & Rhythm: (e.g., "120 BPM driving house beat", "slow, melancholic tempo", "complex syncopated rhythms"). If a specific BPM is provided, use it.
-        *   Production & Atmosphere: Describe the overall feel and a production quality (e.g., "polished modern production", "lo-fi vintage aesthetic with tape hiss", "cavernous reverb", "epic cinematic soundscape", "intimate and acoustic").
-    4.  **FORMAT:** The output must be a JSON array of strings.
-    5.  **GENERATE A COMPLETE SET:** Your task is to generate a comprehensive list of tags that defines the entire sound, based on the user's request. If the user has provided base tags, you should incorporate their ideas into the final list, ensuring a cohesive style. For example, if the user wants a "Sad" mood and provides a "Ukulele" tag, generate a style for a sad ukulele song.
+    2.  **SYSTEMATIC TAG GENERATION:** To ensure a comprehensive style prompt, you must generate tags that cover the following five facets of the music. Think like a music producer.
+        *   **Genre & Subgenre:** Be very specific. "Rock" is too broad. Use terms like "Psychedelic Rock", "Melodic Death Metal", or "UK Garage".
+        *   **Instrumentation & Texture:** Describe the key instruments and their sound. Examples: "punchy 808 sub bass", "distorted, fuzzy guitar riff", "warm Rhodes piano with light tremolo", "lush, cinematic string orchestra", "fingerpicked acoustic guitar".
+        *   **Era & Influence:** Specify a time period or cultural influence. Examples: "90s east coast rap", "80s synth-pop aesthetic", "Vangelis-inspired pads", "baroque-era harpsichord".
+        *   **Production & Atmosphere:** Describe the overall feel, mixing style, and effects. Examples: "polished modern production", "lo-fi vintage aesthetic with tape hiss", "cavernous reverb", "epic cinematic soundscape", "intimate and dry recording", "sidechain compression on pads".
+        *   **Vocal Style (for vocal tracks only):** Describe the singer's voice, delivery, and effects. See the VOCAL PROMPT section for more details.
+    3.  **FORMAT:** The output must be a JSON array of strings. Each string is a single descriptive tag.
+    4.  **GENERATE A COMPLETE SET:** Your task is to generate a comprehensive list of 7-10 tags that defines the entire sound, based on the user's request. If the user has provided base tags, you should incorporate their ideas into the final list, ensuring a cohesive style. For example, if the user wants a "Sad" mood and provides a "Ukulele" tag, generate a style for a sad ukulele song.
     
     ${isInstrumental
       ? `
@@ -310,11 +310,13 @@ export const generateSunoPrompt = async (
     - The user wants an instrumental track.
     - The tag "instrumental" MUST be included in the output array.
     - Your prompt MUST NOT contain any descriptors for vocals (e.g., "male vocals", "female singer", "choir", "rapping").
-    - Focus exclusively on genre, instrumentation, mood, tempo, and production quality.
+    - Focus exclusively on the first four facets: Genre, Instrumentation, Era, and Production.
     - **Even if the inspirational artists are known for their vocals, you must ONLY describe their instrumental style.**`
       : `
     **VOCAL PROMPT:**
-    - **Vocal Style:** Describe the singer's voice and delivery. This is crucial. If the user provides a description, use it as the primary guide. If it's not specified, infer a suitable voice that fits the genre and mood (e.g., for 'Pop' and 'Happy', you might suggest 'bright, clean female pop vocal').`
+    - This is a vocal track. Your tags MUST include descriptors for the vocal performance.
+    - **Vocal Style:** Be descriptive. "Male vocals" is not enough. Use phrases like: "ethereal female soprano", "aggressive rap delivery", "breathy, intimate female vocal", "soulful male baritone with gospel harmonies", "raspy, bluesy rock vocal".
+    - If the user provides a voice style, use it as the primary guide. Otherwise, infer a suitable voice that fits the genre and mood.`
     }
 
     **User's Request:**
@@ -327,7 +329,7 @@ export const generateSunoPrompt = async (
     -   **Voice Style:** ${isInstrumental ? 'N/A' : (voiceStyle || 'Not specified by user, you can infer one.')}
     -   **User-Selected Base Tags (to incorporate into the style):** ${existingTags.length > 0 ? existingTags.join(', ') : 'None'}
 
-    Based on all this, generate the complete JSON array of "Style of Music" tags.
+    Based on all this, generate the complete JSON array of "Style of Music" tags following the 5-facet structure.
 
     **High-Quality Example:**
     *   **User Input:** Genre: "Rock", Mood: "Energetic", Artists: "AC/DC, Guns N' Roses", Voice Style: "Male", Base Tags: ["Electric Guitar"]

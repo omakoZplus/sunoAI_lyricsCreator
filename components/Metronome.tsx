@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from './Button';
 import { Icon } from './Icon';
 
 interface MetronomeProps {
@@ -100,15 +100,14 @@ export const Metronome: React.FC<MetronomeProps> = ({ bpm }) => {
   };
   
   return (
-    <div className="flex items-center gap-3">
-      <Button onClick={handleTogglePlay} variant="secondary" className="!py-1.5 !px-3">
-        <Icon name={isPlaying ? 'stop' : 'play'} className="w-4 h-4" />
-        <span className="text-sm">{isPlaying ? 'Stop' : 'Metronome'}</span>
-      </Button>
-      <div className="flex items-center gap-1.5">
-          <div className={`w-3 h-3 rounded-full bg-purple-400 transition-all duration-100 ${visualBeat ? 'scale-125 opacity-100' : 'scale-100 opacity-30'}`} />
-          <span className="text-sm font-mono text-gray-400 w-12">{parsedBpm > 0 ? `${parsedBpm} BPM` : '-'}</span>
-      </div>
+    <div className="flex items-center gap-2">
+        <button onClick={handleTogglePlay} className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-700/50 text-gray-300 rounded-full hover:bg-gray-600/50 transition-colors" title={isPlaying ? 'Stop Metronome' : 'Play Metronome'}>
+            <Icon name={isPlaying ? 'stop' : 'play'} className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full bg-purple-400 transition-all duration-100 ${visualBeat ? 'scale-125 opacity-100' : 'scale-100 opacity-30'}`} />
+            <span className="text-xs font-mono text-gray-400 w-12 text-left">{parsedBpm > 0 ? `${parsedBpm} BPM` : '-'}</span>
+        </div>
     </div>
   );
 };
